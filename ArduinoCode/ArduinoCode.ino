@@ -8,6 +8,8 @@
 
 // Includes
 #include <math.h>
+#include "helpers.h"
+#include "me327_AS5048A.h"
 
 // Pin declares
 int pwmPin = 5; // PWM output pin for motor 1
@@ -27,7 +29,8 @@ int lastRawDiff = 0;
 int rawOffset = 0;
 int lastRawOffset = 0;
 const int flipThresh = 700;  // threshold to determine whether or not a flip over the 180 degree mark occurred
-boolean flipped = false;
+//boolean flipped = false;
+float handle_position;
 
 // Kinematics variables
 double xh = 0;           // position of the handle [m]
@@ -114,6 +117,10 @@ void setup()
   lastLastRawPos = analogRead(sensorPosPin);
   lastRawPos = analogRead(sensorPosPin);
 
+
+  initialize_loop_checker();
+
+
 }
 
 
@@ -129,7 +136,7 @@ void loop()
 
   // Get voltage output by MR sensor
   rawPos = analogRead(sensorPosPin);  //current raw position from MR sensor
-
+  float remote_angle = send_receive_remote_arduino(handle_position);
   // Calculate differences between subsequent MR sensor readings
   rawDiff = rawPos - lastRawPos;          //difference btwn current raw position and last raw position
   lastRawDiff = rawPos - lastLastRawPos;  //difference btwn current raw position and last last raw position
@@ -205,9 +212,9 @@ void loop()
   //Serial.print(",");
   //Serial.println(0);
 
-  Serial.print(0); // horizontal handle
+  Serial.print(ts,2); // horizontal handle
   Serial.print(",");
-  Serial.println(ts,5); // vertical handle
+  Serial.println(remote_angle,2); // vertical handle
 
   #endif
 
