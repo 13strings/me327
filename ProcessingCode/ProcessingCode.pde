@@ -20,15 +20,21 @@ Serial myPort;        // The serial port
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
-
+// BALL STUFF FOR X
 // current ball pos, vel
-float ballpos_current = width/2;
-float ballvel_current = 0;
-
-
+float ballpos_x_current;
+float ballvel_x_current = 0;
 // prev ball pos, vel
-float ballpos_prev = width/2;
-float ballvel_prev = 0;
+float ballpos_x_prev = width/2;
+float ballvel_x_prev = 0;
+
+// BALL STUFF FOR Y
+// current ball pos, vel
+float ballpos_y_current;
+float ballvel_y_current = 0;
+// prev ball pos, vel
+float ballpos_y_prev = width/2;
+float ballvel_y_prev = 0;
 
 // getting values from serial
 int lf = 10; 
@@ -39,13 +45,17 @@ float minValueIn = -45;
 float maxValueIn = 45;
 float minValueOut = 0;
 float maxValueOut = 800;
-float current_angle;
-float prev_angle;
+float current_angle_x;
+float current_angle_y;
+float prev_angle_x;
+float prev_angle_y;
 
 // physics shit
-float wall_slope;
-float ball_mass = 0.25; // kg?? idk help
-float ballacc;
+float wall_slope_x;
+float wall_slope_y;
+float ball_mass = 0.5; // kg?? idk help
+float ballacc_x;
+float ballacc_y;
 float g = 9.81; // m/s2
 
 
@@ -58,8 +68,9 @@ float g = 9.81; // m/s2
 
 void setup () {
   // set the window size:
-  size(600, 400);
-  
+  size(600, 600);
+  ballpos_x_current = width/2;
+  ballpos_y_current = height/2;
   // List all the available serial ports
   //println(Serial.list());
   // Check the listed serial ports in your machine
@@ -81,36 +92,46 @@ void draw () {
   //***************** Draw Objects in Scene (START) *****************
   //*****************************************************************
 
-  // STUDENT CODE HERE
+  
    float radius = 10;
    float dt = 1.0/frameRate  * 5;
-   wall_slope = tan(current_angle);
    
-   
-   
+   // solving for the horizontal tilt-direction
+   wall_slope_x = tan(current_angle_x);
    float len_platform = 600;
-   
-   float x1 = width/2 - len_platform/2;
-   float x2 = width/2 + len_platform/2;
-   
-   float y1 = -wall_slope * len_platform/2 + height/2;
-   float y2 = wall_slope * len_platform/2 + height/2;
+   float x1_x = width/2 - len_platform/2;
+   float x2_x = width/2 + len_platform/2;
+   float y1_x = -wall_slope_x * len_platform/2 + height/2;
+   float y2_x = wall_slope_x * len_platform/2 + height/2;
     
+    ballacc_x = g*sin(current_angle_x);
     
-  
-    ballacc = g*sin(current_angle);
-    
-    ballvel_current = ballvel_prev + ballacc * dt;
-    ballpos_current = ballpos_prev + (ballvel_prev + ballvel_current)/2 * dt;
-    
-    
+    ballvel_x_current = ballvel_x_prev + ballacc_x * dt;
+    ballpos_x_current = ballpos_x_prev + (ballvel_x_prev + ballvel_x_current)/2 * dt;
      
-    line(x1, y1, x2, y2);
-   ellipse(ballpos_current, height/2, radius*2, radius*2);
-   
-   ballvel_prev = ballvel_current;
-    ballpos_prev = ballpos_current;
+    
+    
+    // solving for vertical tilt-direction
+    wall_slope_y = 1/tan(current_angle_y);
+   float x1_y = width/2 - len_platform/2;
+   float x2_y = width/2 + len_platform/2;
+   float y1_y = -wall_slope_y * len_platform/2 + height/2;
+   float y2_y = wall_slope_y * len_platform/2 + height/2;
+    
+    ballacc_y = g*sin(current_angle_y);
+    
+    ballvel_y_current = ballvel_y_prev + ballacc_y * dt;
+    ballpos_y_current = ballpos_y_prev + (ballvel_y_prev + ballvel_y_current)/2 * dt;
+    
+    ballvel_y_prev = ballvel_y_current;
+    ballpos_y_prev = ballpos_y_current;
 
+     line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
+    line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
+    
+    ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
+   
+    
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
   //*****************************************************************
@@ -132,21 +153,25 @@ void serialEvent (Serial myPort) {
         myString = myString.trim();
         String[] values = split(myString, ",");
         
-        current_angle = float(values[0]);
-        current_angle = radians(current_angle);
-        //float random = float(values[1]);
+        current_angle_x = float(values[0]);
+        current_angle_x = radians(current_angle_x);
+        
+        current_angle_y = float(values[1]);
+        current_angle_y = radians(current_angle_y);
         
       }
 
-      if (Float.isNaN(current_angle))
+      if (Float.isNaN(current_angle_x) ||Float.isNaN(current_angle_y) )
       {
         
-        current_angle = prev_angle;
+        current_angle_x = prev_angle_x;
+        current_angle_y = prev_angle_y;
       }
       
       else
       {
-        prev_angle = current_angle;
+        prev_angle_x = current_angle_x;
+        prev_angle_y = current_angle_y;
       }
 
     }

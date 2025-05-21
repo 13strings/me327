@@ -201,9 +201,13 @@ void loop()
   //******************* Rendering Algorithms ********************
   //*************************************************************
   #ifdef TESTING_1D_BALL
-  Serial.print(ts,5);
+  //Serial.print(ts,5);
+  //Serial.print(",");
+  //Serial.println(0);
+
+  Serial.print(0); // horizontal handle
   Serial.print(",");
-  Serial.println(0);
+  Serial.println(ts,5); // vertical handle
 
   #endif
 
