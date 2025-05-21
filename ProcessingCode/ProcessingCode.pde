@@ -21,43 +21,35 @@ Serial myPort;        // The serial port
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
 
-// STUDENT CODE HERE
-float currentCursorVal;
-float currentMassVal; 
-float prevCursorVal;
-float prevMassVal;
-float mappedCursorVal;
-int lf = 10; // 
+// current ball pos, vel
+float ballpos_current = width/2;
+float ballvel_current = 0;
+
+
+// prev ball pos, vel
+float ballpos_prev = width/2;
+float ballvel_prev = 0;
+
+// getting values from serial
+int lf = 10; 
 String myString = null;
-float dispWallPos; 
-float wallPos = 0.5/10;
-float minValueIn = -0.06;
-float maxValueIn = 0.06;
+
+// mapping shit
+float minValueIn = -45;
+float maxValueIn = 45;
 float minValueOut = 0;
-float maxValueOut = 600;
+float maxValueOut = 800;
+float current_angle;
+float prev_angle;
 
-// variables for mass
-float massEqPos = 0.5/100;
-float mapped_massPos;
-float current_massPos = massEqPos;
+// physics shit
+float wall_slope;
+float ball_mass = 0.25; // kg?? idk help
+float ballacc;
+float g = 9.81; // m/s2
 
-float last_massVel;
-float mappedMassEqPos = map(massEqPos, minValueIn, maxValueIn, minValueOut, maxValueOut);
-float mapped_cursorPos;
-float last_massAcc;
-float current_massVel = 0;
-float current_massAcc = 0;
-float massF;
-float m = 2.0; //[kg]
 
-// parameters of spring and damper
-float k = 300.0; // stiffness
-float b = 1.0; // damping
-float k_user = 1000.0; // stiffness btwn user and mass
 
-float f_user;
-float f_spring;
-float f_damper;
 
 //*****************************************************************
 //******************* Initialize Variables (END) ******************
@@ -67,9 +59,9 @@ float f_damper;
 void setup () {
   // set the window size:
   size(600, 400);
-
+  
   // List all the available serial ports
-  println(Serial.list());
+  //println(Serial.list());
   // Check the listed serial ports in your machine
   // and use the correct index number in Serial.list()[].
 
@@ -91,21 +83,33 @@ void draw () {
 
   // STUDENT CODE HERE
    float radius = 10;
+   float dt = 1.0/frameRate  * 5;
+   wall_slope = tan(current_angle);
    
-  // (1) draw an ellipse (or other shape) to represent user position
-    // HINT: the ellipse (or other shape) should not penetrate the mass object
+   
+   
+   float len_platform = 600;
+   
+   float x1 = width/2 - len_platform/2;
+   float x2 = width/2 + len_platform/2;
+   
+   float y1 = -wall_slope * len_platform/2 + height/2;
+   float y2 = wall_slope * len_platform/2 + height/2;
     
-    ellipse(mappedCursorVal, 200, radius*2, radius*2);
-  // (2) draw an ellipse (or other shape) to represent the mass position
-    ellipse(mapped_massPos+ 20, 200, radius*2, radius*2);
-  // (3) draw the wall where the spring & damper are fixed (i.e., at 0.5 cm)
-    dispWallPos = map(wallPos, minValueIn, maxValueIn, minValueOut, maxValueOut);
     
-    line(dispWallPos, 0, dispWallPos, 400);
-    line(dispWallPos, 200, mapped_massPos+3*radius, 200);
   
-  
-  // (4) draw a line between the fixed wall in (3) and the moving mass
+    ballacc = g*sin(current_angle);
+    
+    ballvel_current = ballvel_prev + ballacc * dt;
+    ballpos_current = ballpos_prev + (ballvel_prev + ballvel_current)/2 * dt;
+    
+    
+     
+    line(x1, y1, x2, y2);
+   ellipse(ballpos_current, height/2, radius*2, radius*2);
+   
+   ballvel_prev = ballvel_current;
+    ballpos_prev = ballpos_current;
 
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
@@ -122,27 +126,27 @@ void serialEvent (Serial myPort) {
     {
       myString = myPort.readStringUntil(lf);
       //print(myString);
+      
       if (myString != null)
       {
-        myString.trim();
+        myString = myString.trim();
         String[] values = split(myString, ",");
-        currentCursorVal = float(values[0]);
-
-        currentMassVal = float(values[1]);
-
+        
+        current_angle = float(values[0]);
+        current_angle = radians(current_angle);
+        //float random = float(values[1]);
+        
       }
 
-      if (Float.isNaN(currentCursorVal))
+      if (Float.isNaN(current_angle))
       {
-        currentCursorVal = prevCursorVal;
-        currentMassVal = prevMassVal;
+        
+        current_angle = prev_angle;
       }
       
       else
       {
-        mappedCursorVal = map(currentCursorVal, minValueIn, maxValueIn, minValueOut, maxValueOut);
-        mapped_massPos = map(currentMassVal, minValueIn, maxValueIn, minValueOut, maxValueOut);
-        prevCursorVal = mappedCursorVal;
+        prev_angle = current_angle;
       }
 
     }
