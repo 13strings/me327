@@ -58,6 +58,26 @@ float ballacc_x;
 float ballacc_y;
 float g = 9.81; // m/s2
 
+class Wall {
+  float x,y,w,h;
+  Wall (float x, float y, float w, float h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+  
+  void display() {
+    line(x,y,x+w, y+h);
+  }
+    boolean isColliding(float ballX, float ballY, float radius) {
+    return ballX + radius > x && ballX - radius < x + w &&
+           ballY + radius > y && ballY - radius < y + h;
+  }
+}
+
+// maze shit
+ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
 
 
@@ -81,6 +101,24 @@ void setup () {
   // A serialEvent() is generated when a newline character is received :
   myPort.bufferUntil('\n');
   background(0);      // set inital background:
+  
+  
+  // maze shit 
+  // creating the maze
+  wallsList.add(new Wall(150,450,300,0)); // bot
+  wallsList.add(new Wall(150, 150, 300, 0)); // top
+  wallsList.add(new Wall(150, 150, 0, 300)); // left
+  wallsList.add(new Wall(450, 150, 0, 300)); // right
+  
+  // inside maze walls (simple maze)
+  wallsList.add(new Wall(210, 210, 0, 240)); // 1
+  wallsList.add(new Wall(270, 390, 0, 60));  // 2
+  wallsList.add(new Wall(270, 390, 120, 0)); // 3
+  wallsList.add(new Wall(270, 330, 120, 0)); // 4
+  wallsList.add(new Wall(270, 210, 0, 120)); // 5
+  wallsList.add(new Wall(270, 210, 120, 0)); // 6
+  wallsList.add(new Wall(330, 270, 120, 0)); // 7
+  
 }
 
 void draw () {
@@ -130,14 +168,15 @@ void draw () {
     ballvel_y_prev = ballvel_y_current;
     ballpos_y_prev = ballpos_y_current;
 
-     line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
-    line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
+     //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
+    //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
     
    ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
+
    
-   print(ballpos_x_current);
-   print(", ");
-   println(ballpos_y_current);
+   for (Wall wall : wallsList) {
+      wall.display();
+    }
     
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
