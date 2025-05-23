@@ -90,13 +90,15 @@ float f_spring;
 float f_damper;
 float f_felt;
 
+int counter = 0;
+
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
 void setup() 
 {
   // Set up serial communication
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   // Set PWM frequency 
   setPwmFrequency(pwmPin,1); 
@@ -212,10 +214,16 @@ void loop()
   //Serial.print(",");
   //Serial.println(0);
 
-  Serial.print(ts,2); // horizontal handle
-  Serial.print(",");
-  Serial.println(remote_angle,2); // vertical handle
 
+  if (counter % 40 == 0)
+  {
+    Serial.print(ts,2); // horizontal handle
+    Serial.print(",");
+    Serial.println(ts,2); // vertical handle
+    
+  }
+
+  counter ++;
   #endif
 
   //*************************************************************
