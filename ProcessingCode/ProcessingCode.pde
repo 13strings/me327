@@ -168,8 +168,7 @@ void draw () {
     ballvel_x_current = ballvel_x_prev + ballacc_x * dt;
     ballpos_x_current = ballpos_x_prev + (ballvel_x_prev + ballvel_x_current)/2 * dt;
      
-    ballvel_x_prev = ballvel_x_current;
-    ballpos_x_prev = ballpos_x_current;
+
     
     // solving for vertical tilt-direction
     wall_slope_y = 1/tan(current_angle_y);
@@ -186,7 +185,7 @@ void draw () {
     
     
     for (Wall wall : wallsList) {
-      if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
+      if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
         ballvel_x_current = 0;
         ballpos_x_current = ballpos_x_prev; // stay in place
         
@@ -198,6 +197,8 @@ void draw () {
       }
     }
     
+    ballvel_x_prev = ballvel_x_current;
+    ballpos_x_prev = ballpos_x_current;
     
     ballvel_y_prev = ballvel_y_current;
     ballpos_y_prev = ballpos_y_current;
