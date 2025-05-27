@@ -186,8 +186,8 @@ void loop()
     double rh = 8.0/100; // m
     double j = rh*rp/rs;
 
-    double ts_x = 0.0153 * updatedPos -8 ;
-    xh = rh * ts_x*M_PI/180;
+    double ts = 0.0153 * updatedPos -8 ;
+    xh = rh * ts*M_PI/180;
     
 
   // STUDENT CODE HERE
@@ -216,7 +216,7 @@ void loop()
     remote_string = fromRemote.readStringUntil(10);
     //remote_string = fromRemote.read();
     current_ts_remote = remote_string.toFloat();
-  if (isnan(current_ts_remote) || abs(current_ts_remote) > 45)
+  if (isnan(current_ts_remote) || abs(current_ts_remote) > 100)
   {
     current_ts_remote = prev_ts_remote;
   }
@@ -236,7 +236,7 @@ void loop()
   //*************************************************************
   //******************* Rendering Algorithms ********************
   //*************************************************************
-  #ifdef TESTING_1D_BALL
+  
   //Serial.print(ts,5);
   //Serial.print(",");
   //Serial.println(0);
@@ -244,15 +244,17 @@ void loop()
 
   if (counter % 40 == 0)
   {
+    Serial.print(ts,2);
+    Serial.print(",");
     Serial.println(current_ts_remote,2); 
     //Serial.print(ts_x,2); // horizontal handle
-    //Serial.print(",");
-    //Serial.println(ts_remote,2); // vertical handle
+    
+     // vertical handle
     
   }
 
   counter ++;
-  #endif
+
 
   //*************************************************************
   //******* Assign a Motor Output Force in Newtons (END) ********  
