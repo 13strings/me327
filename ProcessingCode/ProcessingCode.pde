@@ -49,11 +49,13 @@ float current_angle_x;
 float current_angle_y;
 float prev_angle_x;
 float prev_angle_y;
+float radius = 10;
+float wall_thick = 2;
 
 // physics shit
 float wall_slope_x;
 float wall_slope_y;
-float ball_mass = 0.5; // kg?? idk help
+float ball_mass = 0.02; // kg?? idk help
 float ballacc_x;
 float ballacc_y;
 float g = 9.81; // m/s2
@@ -68,7 +70,7 @@ class Wall {
   }
   
   void display() {
-    line(x,y,x+w, y+h);
+    rect(x,y,w, h);
   }
     boolean isColliding(float ballX, float ballY, float radius) {
     return ballX + radius > x && ballX - radius < x + w &&
@@ -89,8 +91,10 @@ ArrayList<Wall> wallsList = new ArrayList<Wall>();
 void setup () {
   // set the window size:
   size(600, 600);
-  ballpos_x_current = width/2;
-  ballpos_y_current = height/2;
+  ballpos_x_current = 300;
+  ballpos_y_current = 300;
+  ballpos_x_prev = 300;
+  ballpos_y_prev = 300;
   // List all the available serial ports
   //println(Serial.list());
   // Check the listed serial ports in your machine
@@ -104,20 +108,36 @@ void setup () {
   
   
   // maze shit 
-  // creating the maze
-  wallsList.add(new Wall(150,450,300,0)); // bot
-  wallsList.add(new Wall(150, 150, 300, 0)); // top
-  wallsList.add(new Wall(150, 150, 0, 300)); // left
-  wallsList.add(new Wall(450, 150, 0, 300)); // right
+  //// creating the maze
+  //wallsList.add(new Wall(150,450,300,0)); // bot
+  //wallsList.add(new Wall(150, 150, 300, 0)); // top
+  //wallsList.add(new Wall(150, 150, 0, 300)); // left
+  //wallsList.add(new Wall(450, 150, 0, 300)); // right
   
-  // inside maze walls (simple maze)
-  wallsList.add(new Wall(210, 210, 0, 240)); // 1
-  wallsList.add(new Wall(270, 390, 0, 60));  // 2
-  wallsList.add(new Wall(270, 390, 120, 0)); // 3
-  wallsList.add(new Wall(270, 330, 120, 0)); // 4
-  wallsList.add(new Wall(270, 210, 0, 120)); // 5
-  wallsList.add(new Wall(270, 210, 120, 0)); // 6
-  wallsList.add(new Wall(330, 270, 120, 0)); // 7
+  //// inside maze walls (simple maze)
+  //wallsList.add(new Wall(210, 210, 0, 240)); // 1
+  //wallsList.add(new Wall(270, 390, 0, 60));  // 2
+  //wallsList.add(new Wall(270, 390, 120, 0)); // 3
+  //wallsList.add(new Wall(270, 330, 120, 0)); // 4
+  //wallsList.add(new Wall(270, 210, 0, 120)); // 5
+  //wallsList.add(new Wall(270, 210, 120, 0)); // 6
+  //wallsList.add(new Wall(330, 270, 120, 0)); // 7
+  
+    // outer walls
+  wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
+  wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
+  wallsList.add(new Wall(150 - wall_thick, 150, wall_thick, 300)); // left
+  wallsList.add(new Wall(450 - wall_thick, 150, wall_thick, 300)); // right
+  
+  // inner walls 
+  wallsList.add(new Wall(210 - wall_thick/2, 210, wall_thick, 240)); // wall 1
+  wallsList.add(new Wall(270 - wall_thick/2, 390, wall_thick, 60));  // wall 2
+  wallsList.add(new Wall(270, 390 - wall_thick/2, 120, wall_thick)); // wall 3
+  wallsList.add(new Wall(270, 330 - wall_thick/2, 120, wall_thick)); // wall 4
+  wallsList.add(new Wall(270 - wall_thick/2, 210, wall_thick, 120)); // wall 5
+  wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
+  wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
+    
   
 }
 
@@ -131,17 +151,17 @@ void draw () {
   //***************** Draw Objects in Scene (START) *****************
   //*****************************************************************
 
-  
-   float radius = 10;
-   float dt = 1.0/frameRate  * 5;
+  //ellipse(300, 300, radius*2, radius*2);
+ 
+   float dt = 1.0/frameRate *5;
    
    // solving for the horizontal tilt-direction
    wall_slope_x = tan(current_angle_x);
-   float len_platform = 600;
-   float x1_x = width/2 - len_platform/2;
-   float x2_x = width/2 + len_platform/2;
-   float y1_x = -wall_slope_x * len_platform/2 + height/2;
-   float y2_x = wall_slope_x * len_platform/2 + height/2;
+   //float len_platform = 600;
+   //float x1_x = width/2 - len_platform/2;
+   //float x2_x = width/2 + len_platform/2;
+   //float y1_x = -wall_slope_x * len_platform/2 + height/2;
+   //float y2_x = wall_slope_x * len_platform/2 + height/2;
     
     ballacc_x = g*sin(current_angle_x);
     
@@ -154,15 +174,29 @@ void draw () {
     // solving for vertical tilt-direction
     wall_slope_y = 1/tan(current_angle_y);
     
-   float x1_y = width/2 - len_platform/2;
-   float x2_y = width/2 + len_platform/2;
-   float y1_y = -wall_slope_y * len_platform/2 + height/2;
-   float y2_y = wall_slope_y * len_platform/2 + height/2;
+   //float x1_y = width/2 - len_platform/2;
+   //float x2_y = width/2 + len_platform/2;
+   //float y1_y = -wall_slope_y * len_platform/2 + height/2;
+   //float y2_y = wall_slope_y * len_platform/2 + height/2;
     
     ballacc_y = g*sin(current_angle_y);
     
     ballvel_y_current = ballvel_y_prev + ballacc_y * dt;
     ballpos_y_current = ballpos_y_prev + (ballvel_y_prev + ballvel_y_current)/2 * dt;
+    
+    
+    for (Wall wall : wallsList) {
+      if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
+        ballvel_x_current = 0;
+        ballpos_x_current = ballpos_x_prev; // stay in place
+        
+      }
+      if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
+        ballvel_y_current = 0;
+        ballpos_y_current = ballpos_y_prev; // stay in place
+        
+      }
+    }
     
     
     ballvel_y_prev = ballvel_y_current;
@@ -171,8 +205,8 @@ void draw () {
      //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
     //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
     
-   ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-
+   
+    ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
    
    for (Wall wall : wallsList) {
       wall.display();
