@@ -174,13 +174,13 @@ float handle_position_remote = 0.0;
  *  because it will return the same value if a new data has not been received
  */
 float send_receive_remote_arduino(float handle_position) {  
-  if (sending && Serial.availableForWrite() > sizeof(int)){             //check that we have space in the serial buffer to write
-    handle_position_binary.integer = int(handle_position * 100000.0);   // save space by using a integer representation
-    Serial.write(handle_position_binary.binary, 2);                     // write the integer to serial
-    sending = false; 
-    receiving = true;
-    Serial.flush(); // flush the serial for good measure
-  }
+  // if (sending && Serial.availableForWrite() > sizeof(int)){             //check that we have space in the serial buffer to write
+  //   handle_position_binary.integer = int(handle_position * 100000.0);   // save space by using a integer representation
+  //   Serial.write(handle_position_binary.binary, 2);                     // write the integer to serial
+  //   sending = false; 
+  //   receiving = true;
+  //   Serial.flush(); // flush the serial for good measure
+  // }
   
   // read our follower position
   if (receiving && Serial.available() > 1){                                           // if there is at least 2 bytes of data to read from the serial

@@ -10,6 +10,7 @@
 #include <math.h>
 #include "helpers.h"
 #include "me327_AS5048A.h"
+#include <SoftwareSerial.h>
 
 // Pin declares
 int pwmPin = 5; // PWM output pin for motor 1
@@ -92,6 +93,13 @@ float f_felt;
 
 int counter = 0;
 
+SoftwareSerial fromRemote(11,10);
+String remote_string;
+float current_ts_remote;
+float prev_ts_remote;
+
+String inputString = "";
+bool receiving2 = false;
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -99,6 +107,7 @@ void setup()
 {
   // Set up serial communication
   Serial.begin(115200);
+  fromRemote.begin(9600);
   
   // Set PWM frequency 
   setPwmFrequency(pwmPin,1); 
@@ -138,7 +147,7 @@ void loop()
 
   // Get voltage output by MR sensor
   rawPos = analogRead(sensorPosPin);  //current raw position from MR sensor
-  float remote_angle = send_receive_remote_arduino(handle_position);
+  //float remote_angle = send_receive_remote_arduino(handle_position);
   // Calculate differences between subsequent MR sensor readings
   rawDiff = rawPos - lastRawPos;          //difference btwn current raw position and last raw position
   lastRawDiff = rawPos - lastLastRawPos;  //difference btwn current raw position and last last raw position
@@ -177,8 +186,8 @@ void loop()
     double rh = 8.0/100; // m
     double j = rh*rp/rs;
 
-    double ts = 0.0153 * updatedPos -8 ;
-    xh = rh * ts*M_PI/180;
+    double ts_x = 0.0153 * updatedPos -8 ;
+    xh = rh * ts_x*M_PI/180;
     
 
   // STUDENT CODE HERE
@@ -188,20 +197,38 @@ void loop()
   //*****************************************************************
 
   // Calculate velocity with loop time estimation
-  dxh = (double)(xh - xh_prev) / 0.001;
+  // dxh = (double)(xh - xh_prev) / 0.001;
 
-  // Calculate the filtered velocity of the handle using an infinite impulse response filter
-  dxh_filt = .9*dxh + 0.1*dxh_prev; 
+  // // Calculate the filtered velocity of the handle using an infinite impulse response filter
+  // dxh_filt = .9*dxh + 0.1*dxh_prev; 
     
-  // Record the position and velocity
-  xh_prev2 = xh_prev;
-  xh_prev = xh;
+  // // Record the position and velocity
+  // xh_prev2 = xh_prev;
+  // xh_prev = xh;
   
-  dxh_prev2 = dxh_prev;
-  dxh_prev = dxh;
+  // dxh_prev2 = dxh_prev;
+  // dxh_prev = dxh;
   
-  dxh_filt_prev2 = dxh_filt_prev;
-  dxh_filt_prev = dxh_filt;
+  // dxh_filt_prev2 = dxh_filt_prev;
+  // dxh_filt_prev = dxh_filt;
+
+  if (fromRemote.available()) {
+    remote_string = fromRemote.readStringUntil(10);
+    //remote_string = fromRemote.read();
+    current_ts_remote = remote_string.toFloat();
+  if (isnan(current_ts_remote) || abs(current_ts_remote) > 45)
+  {
+    current_ts_remote = prev_ts_remote;
+  }
+  else
+  {
+    prev_ts_remote = current_ts_remote;
+  }    
+    //remote_string = fromRemote.read();
+    //Serial.println(remote_string);
+  }
+
+
   
   //*************************************************************
   //****** Assign a Motor Output Force in Newtons (START) *******  
@@ -217,9 +244,10 @@ void loop()
 
   if (counter % 40 == 0)
   {
-    Serial.print(ts,2); // horizontal handle
-    Serial.print(",");
-    Serial.println(ts,2); // vertical handle
+    Serial.println(current_ts_remote,2); 
+    //Serial.print(ts_x,2); // horizontal handle
+    //Serial.print(",");
+    //Serial.println(ts_remote,2); // vertical handle
     
   }
 
@@ -238,23 +266,23 @@ void loop()
   //*************************************************************
 
   // Determine correct direction for motor torque
-  if(force > 0) { 
-    digitalWrite(dirPin, HIGH);
-  } else {
-    digitalWrite(dirPin, LOW);
-  }
+//   if(force > 0) { 
+//     digitalWrite(dirPin, HIGH);
+//   } else {
+//     digitalWrite(dirPin, LOW);
+//   }
 
-  // Compute the duty cycle required to generate Tp (torque at the motor pulley)
-  duty = sqrt(abs(Tp)/0.03);
+//   // Compute the duty cycle required to generate Tp (torque at the motor pulley)
+//   duty = sqrt(abs(Tp)/0.03);
 
-  // Make sure the duty cycle is between 0 and 100%
-  if (duty > 1) {            
-    duty = 1;
-  } else if (duty < 0) { 
-    duty = 0;
-  }  
-  output = (int)(duty* 255);   // convert duty cycle to output signal
-  analogWrite(pwmPin,output);  // output the signal
+//   // Make sure the duty cycle is between 0 and 100%
+//   if (duty > 1) {            
+//     duty = 1;
+//   } else if (duty < 0) { 
+//     duty = 0;
+//   }  
+//   output = (int)(duty* 255);   // convert duty cycle to output signal
+//   analogWrite(pwmPin,output);  // output the signal
 }
 
 // --------------------------------------------------------------
