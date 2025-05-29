@@ -13,6 +13,7 @@
 const int MOTOR_PWM_PIN = 5; // PWM output pin for motor 1
 const int MOTOR_DIR_PIN = 8; // direction output pin for motor 1
 const int POSITION_SENSOR_PIN = A2; // input pin for MR sensor
+const int POSITION_SENSOR_PINF = A4; // from follower
 const int HALL_EFFECT_SENSOR_PIN = 10;
 
 const int PWM_DIVIDER = 1;
@@ -34,6 +35,17 @@ int raw_difference = 0;
 int last_raw_difference = 0;
 int raw_offset = 0;
 int last_raw_offset = 0;
+
+// Position tracking variables
+boolean flippedF = false;        // Whether we've flipped
+int raw_positionF = 0;           // current raw reading from MR sensor
+int last_raw_positionF = 0;      // last raw reading from MR sensor
+int last_last_raw_positionF = 0; // last last raw reading from MR sensor
+int flipsF = 0;                  // keeps track of the number of flips over the 180deg mark
+int raw_differenceF = 0;
+int last_raw_differenceF = 0;
+int raw_offsetF = 0;
+int last_raw_offsetF = 0;
 
 // Velocity tracking variables
 float last_handle_position = 0.0;
@@ -60,6 +72,13 @@ void initialize_mr_sensor() {
   last_raw_position = analogRead(POSITION_SENSOR_PIN);
   last_last_raw_position = last_raw_position;
   flips = 0;
+
+  pinMode(POSITION_SENSOR_PINF, INPUT); // set MR sensor pin to be an input
+  
+  // Initialize position valiables
+  last_raw_positionF = analogRead(POSITION_SENSOR_PINF);
+  last_last_raw_positionF = last_raw_positionF;
+  flipsF = 0;
 }
 
 void initialize_hall_effect_sensor() {

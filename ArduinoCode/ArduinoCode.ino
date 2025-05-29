@@ -16,7 +16,10 @@
 int pwmPin = 5; // PWM output pin for motor 1
 int dirPin = 8; // direction output pin for motor 1
 int sensorPosPin = A2; // input pin for MR sensor
+int sensorPosPinF = A4; // input pin for MR sensor
 int fsrPin = A3; // input pin for FSR sensor
+
+
 
 // Position tracking variables
 int updatedPos = 0;     // keeps track of the latest updated value of the MR sensor reading
@@ -33,6 +36,22 @@ const int flipThresh = 700;  // threshold to determine whether or not a flip ove
 //boolean flipped = false;
 float handle_position;
 
+
+// Position tracking variables - FOLLOWER
+int updatedPosF = 0;     // keeps track of the latest updated value of the MR sensor reading
+int rawPosF = 0;         // current raw reading from MR sensor
+int lastRawPosF = 0;     // last raw reading from MR sensor
+int lastLastRawPosF = 0; // last last raw reading from MR sensor
+int flipNumberF = 0;     // keeps track of the number of flips over the 180deg mark
+int tempOffsetF = 0;
+int rawDiffF = 0;
+int lastRawDiffF = 0;
+int rawOffsetF = 0;
+int lastRawOffsetF = 0;
+const int flipThreshF = 700;  // threshold to determine whether or not a flip over the 180 degree mark occurred
+
+float handle_positionF;
+
 // Kinematics variables
 double xh = 0;           // position of the handle [m]
 double theta_s = 0;      // Angle of the sector pulley in deg
@@ -44,6 +63,17 @@ double dxh_prev2;
 double dxh_filt;         // Filtered velocity of the handle
 double dxh_filt_prev;
 double dxh_filt_prev2;
+
+double xhF = 0;           // position of the handle [m]
+double theta_sF = 0;      // Angle of the sector pulley in deg
+double xh_prevF;          // Distance of the handle at previous time step
+double xh_prev2F;
+double dxhF;              // Velocity of the handle
+double dxh_prevF;
+double dxh_prev2F;
+double dxh_filtF;         // Filtered velocity of the handle
+double dxh_filt_prevF;
+double dxh_filt_prev2F;    
 
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
@@ -93,13 +123,13 @@ float f_felt;
 
 int counter = 0;
 
-SoftwareSerial fromRemote(11,10);
-String remote_string;
-float current_ts_remote;
-float prev_ts_remote;
+//SoftwareSerial fromRemote(11,10);
+//String remote_string;
+//float current_ts_remote;
+//float prev_ts_remote;
 
-String inputString = "";
-bool receiving2 = false;
+//String inputString = "";
+//bool receiving2 = false;
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -107,7 +137,7 @@ void setup()
 {
   // Set up serial communication
   Serial.begin(115200);
-  fromRemote.begin(9600);
+  //fromRemote.begin(9600);
   
   // Set PWM frequency 
   setPwmFrequency(pwmPin,1); 
@@ -115,6 +145,7 @@ void setup()
   // Input pins
   pinMode(sensorPosPin, INPUT); // set MR sensor pin to be an input
   pinMode(fsrPin, INPUT);       // set FSR sensor pin to be an input
+  pinMode(sensorPosPinF, INPUT);
 
   // Output pins
   pinMode(pwmPin, OUTPUT);  // PWM pin for motor A
@@ -127,6 +158,9 @@ void setup()
   // Initialize position valiables
   lastLastRawPos = analogRead(sensorPosPin);
   lastRawPos = analogRead(sensorPosPin);
+
+  lastLastRawPosF = analogRead(sensorPosPinF);
+  lastRawPosF = analogRead(sensorPosPinF);
 
 
   initialize_loop_checker();
@@ -145,6 +179,7 @@ void loop()
   //*** Section 1. Compute position in counts (do not change) ***  
   //*************************************************************
 
+// ***************************** FOR LEADER HANDLE
   // Get voltage output by MR sensor
   rawPos = analogRead(sensorPosPin);  //current raw position from MR sensor
   //float remote_angle = send_receive_remote_arduino(handle_position);
@@ -177,6 +212,41 @@ void loop()
     updatedPos = rawPos + flipNumber*tempOffset; // need to update pos based on what most recent offset is 
     flipped = false;
   }
+
+  //****************** FOR FOLLOWER HANDLE
+
+  // Get voltage output by MR sensor
+  rawPosF = analogRead(sensorPosPinF);  //current raw position from MR sensor
+  //Serial.println(sensorPosPinF);
+  // Calculate differences between subsequent MR sensor readings
+  rawDiffF = rawPosF - lastRawPosF;          //difference btwn current raw position and last raw position
+  lastRawDiffF = rawPosF - lastLastRawPosF;  //difference btwn current raw position and last last raw position
+  rawOffsetF = abs(rawDiffF);
+  lastRawOffsetF = abs(lastRawDiffF);
+  
+  // Update position record-keeping vairables
+  lastLastRawPosF = lastRawPosF;
+  lastRawPosF = rawPosF;
+  
+  // Keep track of flips over 180 degrees
+  if((lastRawOffsetF > flipThreshF) && (!flippedF)) { // enter this anytime the last offset is greater than the flip threshold AND it has not just flipped
+    if(lastRawDiffF > 0) {        // check to see which direction the drive wheel was turning
+      flipNumberF--;              // cw rotation 
+    } else {                     // if(rawDiff < 0)
+      flipNumberF++;              // ccw rotation
+    }
+    if(rawOffsetF > flipThreshF) { // check to see if the data was good and the most current offset is above the threshold
+      updatedPosF = rawPosF + flipNumberF*rawOffsetF; // update the pos value to account for flips over 180deg using the most current offset 
+      tempOffsetF = rawOffsetF;
+    } else {                     // in this case there was a blip in the data and we want to use lastactualOffset instead
+      updatedPosF = rawPosF + flipNumber*lastRawOffsetF;  // update the pos value to account for any flips over 180deg using the LAST offset
+      tempOffsetF = lastRawOffsetF;
+    }
+    flippedF = true;            // set boolean so that the next time through the loop won't trigger a flip
+  } else {                        // anytime no flip has occurred
+    updatedPosF = rawPosF + flipNumberF*tempOffsetF; // need to update pos based on what most recent offset is 
+    flippedF = false;
+  }
  
   //*****************************************************************
   //************ Compute Position in Meters (START) *****************
@@ -187,7 +257,10 @@ void loop()
     double j = rh*rp/rs;
 
     double ts = 0.0153 * updatedPos -8 ;
+    double tsF = 0.0153 * updatedPosF -10 ;
     xh = rh * ts*M_PI/180;
+
+    xhF = rh*tsF*M_PI/180;
     
 
   // STUDENT CODE HERE
@@ -197,46 +270,37 @@ void loop()
   //*****************************************************************
 
   // Calculate velocity with loop time estimation
-  // dxh = (double)(xh - xh_prev) / 0.001;
+  dxh = (double)(xh - xh_prev) / 0.001;
 
-  // // Calculate the filtered velocity of the handle using an infinite impulse response filter
-  // dxh_filt = .9*dxh + 0.1*dxh_prev; 
+  // Calculate the filtered velocity of the handle using an infinite impulse response filter
+  dxh_filt = .9*dxh + 0.1*dxh_prev; 
     
-  // // Record the position and velocity
-  // xh_prev2 = xh_prev;
-  // xh_prev = xh;
+  // Record the position and velocity
+  xh_prev2 = xh_prev;
+  xh_prev = xh;
   
-  // dxh_prev2 = dxh_prev;
-  // dxh_prev = dxh;
+  dxh_prev2 = dxh_prev;
+  dxh_prev = dxh;
   
-  // dxh_filt_prev2 = dxh_filt_prev;
-  // dxh_filt_prev = dxh_filt;
+  dxh_filt_prev2 = dxh_filt_prev;
+  dxh_filt_prev = dxh_filt;
 
-  if (fromRemote.available()) {
-    remote_string = fromRemote.readStringUntil(10);
-    //remote_string = fromRemote.read();
-    current_ts_remote = remote_string.toFloat();
-  if (isnan(current_ts_remote) || abs(current_ts_remote) > 100)
-  {
-    current_ts_remote = prev_ts_remote;
-  }
-  else
-  {
-    prev_ts_remote = current_ts_remote;
-  }    
-    //remote_string = fromRemote.read();
-    //Serial.println(remote_string);
-  }
-
+  // code that works for remote reading 
+  // if (fromRemote.available()) {
+  //   remote_string = fromRemote.readStringUntil(10);
+  //   //remote_string = fromRemote.read();
+  //   current_ts_remote = remote_string.toFloat();
+  // if (isnan(current_ts_remote) || abs(current_ts_remote) > 100)
+  // {
+  //   current_ts_remote = prev_ts_remote;
+  // }
+  // else
+  // {
+  //   prev_ts_remote = current_ts_remote;
+  // }    
 
   
-  //*************************************************************
-  //****** Assign a Motor Output Force in Newtons (START) *******  
-  //*************************************************************
-  //*************************************************************
-  //******************* Rendering Algorithms ********************
-  //*************************************************************
-  
+
   //Serial.print(ts,5);
   //Serial.print(",");
   //Serial.println(0);
@@ -246,7 +310,7 @@ void loop()
   {
     Serial.print(ts,2);
     Serial.print(",");
-    Serial.println(current_ts_remote,2); 
+    Serial.println(tsF,2); 
     //Serial.print(ts_x,2); // horizontal handle
     
      // vertical handle
@@ -254,6 +318,7 @@ void loop()
   }
 
   counter ++;
+  }
 
 
   //*************************************************************
@@ -285,7 +350,7 @@ void loop()
 //   }  
 //   output = (int)(duty* 255);   // convert duty cycle to output signal
 //   analogWrite(pwmPin,output);  // output the signal
-}
+
 
 // --------------------------------------------------------------
 // Function to set PWM Freq -- DO NOT EDIT
