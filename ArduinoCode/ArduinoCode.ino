@@ -13,8 +13,8 @@
 #include <SoftwareSerial.h>
 
 // Pin declares
-int pwmPin = 5; // PWM output pin for motor 1
-int dirPin = 8; // direction output pin for motor 1
+int pwmXPin = 5; // PWM output pin for motor 1
+int dirXPin = 8; // direction output pin for motor 1
 int sensorPosPin = A2; // input pin for MR sensor
 int sensorPosPinF = A4; // input pin for MR sensor
 int fsrPin = A3; // input pin for FSR sensor
@@ -92,20 +92,25 @@ double Tp = 0;              // torque of the motor pulley
 double duty = 0;            // duty cylce (between 0 and 255)
 unsigned int output = 0;    // output command to the motor
 
-float current_cursorPos;
-float prevCursorPos;
 int lf = 10; // 
-String myString;
-float dispWallPos; 
-
 
 int counter = 0;
-unsigned long collisionXStartTime = 0;
-bool vibrationXActive = false;
-
 
 float current_pos_x = 0, current_pos_y = 0;
 float prev_pos_x = 0, prev_pos_y = 0;
+
+float m = 0.2;
+float g = -9.81; 
+
+  float rp = 0.5/100.0; // m
+  float rs = 7.5/100; // m
+  float rh = 8.0/100; // m
+  float j = rh*rp/rs;
+ 
+ float force_x = 0;
+ float pulley_torque_x = 0;
+ float processing_width = 600;
+ float duty_x = 0;
 
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
@@ -117,7 +122,7 @@ void setup()
   //fromRemote.begin(9600);
   
   // Set PWM frequency 
-  setPwmFrequency(pwmPin,1); 
+  setPwmFrequency(pwmXPin,1); 
   
   // Input pins
   pinMode(sensorPosPin, INPUT); // set MR sensor pin to be an input
@@ -125,13 +130,13 @@ void setup()
   pinMode(sensorPosPinF, INPUT);
 
   // Output pins
-  pinMode(pwmPin, OUTPUT);  // PWM pin for motor A
-  pinMode(dirPin, OUTPUT);  // dir pin for motor A
+  pinMode(pwmXPin, OUTPUT);  // PWM pin for motor A
+  pinMode(dirXPin, OUTPUT);  // dir pin for motor A
   pinMode(vibMotorPin1, OUTPUT);
   
   // Initialize motor 
-  analogWrite(pwmPin, 0);     // set to not be spinning (0/255)
-  digitalWrite(dirPin, LOW);  // set direction
+  analogWrite(pwmXPin, 0);     // set to not be spinning (0/255)
+  digitalWrite(dirXPin, LOW);  // set direction
   
   // Initialize position valiables
   lastLastRawPos = analogRead(sensorPosPin);
@@ -295,16 +300,38 @@ void loop()
   {
     Serial.print(ts,2);
     Serial.print(",");
-    Serial.println(tsF,2);  // sending values to processing
+    Serial.print(tsF,2);  // sending values to processing
     
     // for debugging arduino stuff by sending to processing - rm "ln" from line above
-      // Serial.print(",");
-      // Serial.print(current_pos_x,2);
+      Serial.print(",");
+      Serial.println(duty_x,2);
       // Serial.print(",");
       // Serial.println(current_pos_y,2);   
   }
 
   counter ++;
+
+  // motor commands based on position of ball and relative moment
+  force_x = (current_pos_x - processing_width/2) * m * g * cos(ts*M_PI / 180.0);
+  pulley_torque_x = calculate_pulley_torque(force_x);
+
+  if(pulley_torque_x > 0) { 
+    digitalWrite(dirXPin, HIGH);
+  } else {
+    digitalWrite(dirXPin, LOW);
+  }
+
+  // Compute the duty cycle required to generate Tp (torque at the motor pulley)
+  duty_x = sqrt(abs(pulley_torque_x)/0.0183);
+
+  // Make sure the duty cycle is between 0 and 100%
+  if (duty_x > 1) {            
+    duty_x = 1;
+  } else if (duty_x < 0) { 
+    duty_x = 0;
+  }  
+  unsigned int output_x = (int)(duty_x* 255);     // convert duty cycle to output signal
+  analogWrite(pwmXPin, output_x);                // output the signal
 
   
 }
@@ -375,4 +402,9 @@ void setPwmFrequency(int pin, int divisor) {
   }
 }
 
+float calculate_pulley_torque(float force) {
+  // STUDENT CODE HERE
+   Tp = -j*(force);
+  return Tp;
+}
 

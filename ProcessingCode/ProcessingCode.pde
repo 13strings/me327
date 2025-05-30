@@ -252,12 +252,13 @@ void serialEvent (Serial myPort) {
         current_angle_y = float(values[1]);
         current_angle_y = radians(current_angle_y);
         
-        float ard_1 = float(values[2]);
-        float ard_2 = float(values[3]);
-        
-        String ardData = nf(ard_1, 0, 2) + "," + 
-                  nf(ard_2, 0, 2) + "\n";
-        print(ardData);
+        // for debugging arduino commands!
+          float ard_1 = float(values[2]);
+          //float ard_2 = float(values[3]);
+          
+          String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
+          //          nf(ard_2, 0, 2) + "\n";
+          print(ardData);
         
         
       }
