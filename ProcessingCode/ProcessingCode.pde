@@ -73,15 +73,17 @@ class Wall {
     rect(x,y,w, h);
   }
     boolean isColliding(float ballX, float ballY, float radius) {
-    return ballX + radius > x && ballX - radius < x + w &&
-           ballY + radius > y && ballY - radius < y + h;
+    return ballX + radius >= x && ballX - radius <= x + w &&
+           ballY + radius >= y && ballY - radius <= y + h;
   }
 }
 
 // maze shit
 ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
-
+// coms with collisions
+ boolean collisionXSent = false;
+ boolean collisionYSent = false;
 
 //*****************************************************************
 //******************* Initialize Variables (END) ******************
@@ -138,6 +140,7 @@ void setup () {
   wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
   wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
     
+ 
   
 }
 
@@ -188,13 +191,16 @@ void draw () {
       if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
         ballvel_x_current = 0;
         ballpos_x_current = ballpos_x_prev; // stay in place
-        
-      }
+                     
+      } 
+      
+      
       if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
         ballvel_y_current = 0;
-        ballpos_y_current = ballpos_y_prev; // stay in place
+        ballpos_y_current = ballpos_y_prev; // stay in place  
         
-      }
+      } 
+      
     }
     
     ballvel_x_prev = ballvel_x_current;
@@ -212,6 +218,12 @@ void draw () {
    for (Wall wall : wallsList) {
       wall.display();
     }
+    
+   String ballData = nf(ballpos_x_current, 0, 2) + "," + 
+                  nf(ballpos_y_current, 0, 2) + "\n";
+
+   myPort.write(ballData);
+   //print(ballData);
     
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
@@ -239,6 +251,13 @@ void serialEvent (Serial myPort) {
         
         current_angle_y = float(values[1]);
         current_angle_y = radians(current_angle_y);
+        
+        float ard_1 = float(values[2]);
+        float ard_2 = float(values[3]);
+        
+        String ardData = nf(ard_1, 0, 2) + "," + 
+                  nf(ard_2, 0, 2) + "\n";
+        print(ardData);
         
         
       }

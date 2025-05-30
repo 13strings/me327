@@ -19,7 +19,7 @@ int sensorPosPin = A2; // input pin for MR sensor
 int sensorPosPinF = A4; // input pin for MR sensor
 int fsrPin = A3; // input pin for FSR sensor
 
-
+int vibMotorPin1 = 9;
 
 // Position tracking variables
 int updatedPos = 0;     // keeps track of the latest updated value of the MR sensor reading
@@ -99,37 +99,14 @@ String myString;
 float dispWallPos; 
 
 
-// variables for mass
-float massEqPos = 0.5/100;
-float current_massPos = massEqPos;
-
-float last_massVel;
-
-float last_massAcc;
-float current_massVel = 0;
-float current_massAcc = 0;
-float massF;
-float m = 2.0; //[kg]
-
-// parameters of spring and damper
-float k = 300.0; // stiffness
-float b = 1.0; // damping
-float k_user = 1000.0; // stiffness btwn user and mass
-
-float f_user;
-float f_spring;
-float f_damper;
-float f_felt;
-
 int counter = 0;
+unsigned long collisionXStartTime = 0;
+bool vibrationXActive = false;
 
-//SoftwareSerial fromRemote(11,10);
-//String remote_string;
-//float current_ts_remote;
-//float prev_ts_remote;
 
-//String inputString = "";
-//bool receiving2 = false;
+float current_pos_x = 0, current_pos_y = 0;
+float prev_pos_x = 0, prev_pos_y = 0;
+
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -150,6 +127,7 @@ void setup()
   // Output pins
   pinMode(pwmPin, OUTPUT);  // PWM pin for motor A
   pinMode(dirPin, OUTPUT);  // dir pin for motor A
+  pinMode(vibMotorPin1, OUTPUT);
   
   // Initialize motor 
   analogWrite(pwmPin, 0);     // set to not be spinning (0/255)
@@ -285,40 +263,51 @@ void loop()
   dxh_filt_prev2 = dxh_filt_prev;
   dxh_filt_prev = dxh_filt;
 
-  // code that works for remote reading 
-  // if (fromRemote.available()) {
-  //   remote_string = fromRemote.readStringUntil(10);
-  //   //remote_string = fromRemote.read();
-  //   current_ts_remote = remote_string.toFloat();
-  // if (isnan(current_ts_remote) || abs(current_ts_remote) > 100)
-  // {
-  //   current_ts_remote = prev_ts_remote;
-  // }
-  // else
-  // {
-  //   prev_ts_remote = current_ts_remote;
-  // }    
+  if (Serial.available() > 0) {
+    String string_received = Serial.readStringUntil('\n'); // Read command
+    // Clean it
 
-  
+    int commaIndex = string_received.indexOf(',');
 
-  //Serial.print(ts,5);
-  //Serial.print(",");
-  //Serial.println(0);
+    if (commaIndex != -1) {
+      String xStr = string_received.substring(0, commaIndex);
+      String yStr = string_received.substring(commaIndex + 1);
+
+      float temp_x = xStr.toFloat();
+      float temp_y = yStr.toFloat();
+
+      // NaN check isn't really needed, but here's a workaround in Arduino:
+      if (!isnan(temp_x) && !isnan(temp_y)) {
+        prev_pos_x = current_pos_x;
+        prev_pos_y = current_pos_y;
+        current_pos_x = temp_x;
+        current_pos_y = temp_y;
+        
+      } else {
+        current_pos_x = prev_pos_x;
+        current_pos_y = prev_pos_y;
+      }
+    }
+  }
 
 
-  if (counter % 40 == 0)
+  if (counter % 100 == 0)
   {
     Serial.print(ts,2);
     Serial.print(",");
-    Serial.println(tsF,2); 
-    //Serial.print(ts_x,2); // horizontal handle
+    Serial.println(tsF,2);  // sending values to processing
     
-     // vertical handle
-    
+    // for debugging arduino stuff by sending to processing - rm "ln" from line above
+      // Serial.print(",");
+      // Serial.print(current_pos_x,2);
+      // Serial.print(",");
+      // Serial.println(current_pos_y,2);   
   }
 
   counter ++;
-  }
+
+  
+}
 
 
   //*************************************************************
@@ -385,3 +374,5 @@ void setPwmFrequency(int pin, int divisor) {
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
 }
+
+
