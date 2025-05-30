@@ -93,9 +93,18 @@ double duty = 0;            // duty cylce (between 0 and 255)
 unsigned int output = 0;    // output command to the motor
 
 int lf = 10; // 
+<<<<<<< HEAD
+=======
+String myString;
+float dispWallPos; 
+
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
 
 int counter = 0;
+unsigned long collisionXStartTime = 0;
+bool vibrationXActive = false;
 
+<<<<<<< HEAD
 float current_pos_x = 0, current_pos_y = 0;
 float prev_pos_x = 0, prev_pos_y = 0;
 
@@ -112,6 +121,12 @@ float g = -9.81;
  float processing_width = 600;
  float duty_x = 0;
 
+=======
+
+float current_pos_x = 0, current_pos_y = 0;
+float prev_pos_x = 0, prev_pos_y = 0;
+
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -130,8 +145,13 @@ void setup()
   pinMode(sensorPosPinF, INPUT);
 
   // Output pins
+<<<<<<< HEAD
   pinMode(pwmXPin, OUTPUT);  // PWM pin for motor A
   pinMode(dirXPin, OUTPUT);  // dir pin for motor A
+=======
+  pinMode(pwmPin, OUTPUT);  // PWM pin for motor A
+  pinMode(dirPin, OUTPUT);  // dir pin for motor A
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
   pinMode(vibMotorPin1, OUTPUT);
   
   // Initialize motor 
@@ -300,17 +320,26 @@ void loop()
   {
     Serial.print(ts,2);
     Serial.print(",");
+<<<<<<< HEAD
     Serial.print(tsF,2);  // sending values to processing
     
     // for debugging arduino stuff by sending to processing - rm "ln" from line above
       Serial.print(",");
       Serial.println(duty_x,2);
+=======
+    Serial.println(tsF,2);  // sending values to processing
+    
+    // for debugging arduino stuff by sending to processing - rm "ln" from line above
+      // Serial.print(",");
+      // Serial.print(current_pos_x,2);
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
       // Serial.print(",");
       // Serial.println(current_pos_y,2);   
   }
 
   counter ++;
 
+<<<<<<< HEAD
   // motor commands based on position of ball and relative moment
   force_x = (current_pos_x - processing_width/2) * m * g * cos(ts*M_PI / 180.0);
   pulley_torque_x = calculate_pulley_torque(force_x);
@@ -333,6 +362,8 @@ void loop()
   unsigned int output_x = (int)(duty_x* 255);     // convert duty cycle to output signal
   analogWrite(pwmXPin, output_x);                // output the signal
 
+=======
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
   
 }
 
@@ -402,9 +433,12 @@ void setPwmFrequency(int pin, int divisor) {
   }
 }
 
+<<<<<<< HEAD
 float calculate_pulley_torque(float force) {
   // STUDENT CODE HERE
    Tp = -j*(force);
   return Tp;
 }
+=======
+>>>>>>> 389235fca82aa6e6a9d0b9ac6550f7b11eaba0fb
 
