@@ -107,6 +107,9 @@ float prev_pos_x = 0, prev_pos_y = 0;
 float m = 0.02;
 float g = -9.81; 
 
+float forcelim = 0;
+float xlim = 0;
+
   float rp = 0.5/100.0; // m
   float rs = 7.5/100; // m
   float rh = 8.0/100; // m
@@ -321,6 +324,13 @@ void loop()
   // motor commands based on position of ball and relative moment
   force_x = (current_pos_x - processing_width/2) * m * g * cos(ts*M_PI / 180.0);
   pulley_torque_x = j * force_x;
+
+  if(force_x > forcelim){
+    force_x = forcelim;
+  }
+  if(force_x < -1*forcelim){
+    force_x = -1 * forcelim;
+  }
 
   if(force_x > 0) { 
     digitalWrite(dirXPin, LOW);
