@@ -62,6 +62,7 @@ float g = 9.81; // m/s2
 
 class Wall {
   float x,y,w,h;
+  float wallHeight = 10;
   Wall (float x, float y, float w, float h) {
     this.x = x;
     this.y = y;
@@ -71,6 +72,15 @@ class Wall {
   
   void display() {
     rect(x,y,w, h);
+  }
+  
+  void display3D() {
+    pushMatrix();
+    translate(x + w/2, y + h/2, -wallHeight/2);
+    fill(200);
+    box(w, h, wallHeight); // 3D wall
+    popMatrix();
+    
   }
     boolean isColliding(float ballX, float ballY, float radius) {
     return ballX + radius >= x && ballX - radius <= x + w &&
@@ -92,7 +102,7 @@ ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
 void setup () {
   // set the window size:
-  size(600, 600);
+  size(600, 600, P3D);
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
@@ -107,7 +117,9 @@ void setup () {
   // A serialEvent() is generated when a newline character is received :
   myPort.bufferUntil('\n');
   background(0);      // set inital background:
+  lights();
   
+ 
   
   // maze shit 
   //// creating the maze
@@ -147,6 +159,7 @@ void setup () {
 void draw () {
   // everything happens in the serialEvent()
   background(0); //uncomment if you want to control a ball
+  lights();
   stroke(127, 34, 255);     //stroke color
   strokeWeight(4);        //stroke wider
   
@@ -213,11 +226,26 @@ void draw () {
     //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
     
    
-    ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-   
+  //ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
+  
+  pushMatrix();
+  translate(width/2, height/2, 0);
+  rotateX(-current_angle_y);
+  rotateY(current_angle_x);
+  translate(-width/2, -height/2, 0);
+  
    for (Wall wall : wallsList) {
-      wall.display();
+      wall.display3D();
     }
+    
+    fill(255,0,0);
+    noStroke();
+    pushMatrix();
+    translate(ballpos_x_current, ballpos_y_current, -radius);
+    sphere(radius);
+    popMatrix();
+    
+    popMatrix();
     
    String ballData = nf(ballpos_x_current, 0, 2) + "," + 
                   nf(ballpos_y_current, 0, 2) + "\n";
