@@ -254,12 +254,12 @@ void serialEvent (Serial myPort) {
         
 
         // for debugging arduino commands!
-          float ard_1 = float(values[2]);
+          //float ard_1 = float(values[2]);
           //float ard_2 = float(values[3]);
           
-          String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
+          //String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
           //          nf(ard_2, 0, 2) + "\n";
-          print(ardData);
+          //print(ardData);
         
         
       }
