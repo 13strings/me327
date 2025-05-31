@@ -260,7 +260,6 @@ void serialEvent (Serial myPort) {
           String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
           //          nf(ard_2, 0, 2) + "\n";
           print(ardData);
-
         
         
       }
