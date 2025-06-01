@@ -14,9 +14,11 @@
  */
 
 import processing.serial.*;
+import processing.sound.*;
 
 Serial myPort;        // The serial port
 
+SoundFile file;
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
@@ -36,8 +38,12 @@ float ballvel_y_current = 0;
 float ballpos_y_prev = width/2;
 float ballvel_y_prev = 0;
 
+// Vel Magnitude
+float ballvelmag = 0;
+float minThresh = 1.0;
+
 // getting values from serial
-int lf = 10; 
+int lf = 10;
 String myString = null;
 
 // mapping shit
@@ -66,8 +72,13 @@ boolean y_collision = false;
 boolean x_prev_collision = false;
 boolean y_prev_collision = false;
 
+//Audio shit
+boolean play = false;
+boolean wasPlaying = false;
+float speed = 1.0;
+
 class Wall {
-  float x,y,w,h;
+  float x, y, w, h;
   float wallHeight = 10;
   Wall (float x, float y, float w, float h) {
     this.x = x;
@@ -75,22 +86,21 @@ class Wall {
     this.w = w;
     this.h = h;
   }
-  
+
   void display() {
-    rect(x,y,w, h);
+    rect(x, y, w, h);
   }
-  
+
   void display3D() {
     pushMatrix();
     translate(x + w/2, y + h/2, -wallHeight/2);
     fill(200);
     box(w, h, wallHeight); // 3D wall
     popMatrix();
-    
   }
-    boolean isColliding(float ballX, float ballY, float radius) {
+  boolean isColliding(float ballX, float ballY, float radius) {
     return ballX + radius >= x && ballX - radius <= x + w &&
-           ballY + radius >= y && ballY - radius <= y + h;
+      ballY + radius >= y && ballY - radius <= y + h;
   }
 }
 
@@ -107,9 +117,9 @@ ArrayList<Wall> wallsList = new ArrayList<Wall>();
 void setup () {
   // set the window size:
   // size - 3D
-  //size(600, 600, P3D); 
+  //size(600, 600, P3D);
   // size - 2D
-  size(600, 600); 
+  size(600, 600);
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
@@ -125,16 +135,16 @@ void setup () {
   myPort.bufferUntil('\n');
   background(0);      // set inital background:
   lights();
-  
- 
-  
+
+
+
   // maze shit - 2D
   // creating the maze
-  wallsList.add(new Wall(150,450,300,0)); // bot
+  wallsList.add(new Wall(150, 450, 300, 0)); // bot
   wallsList.add(new Wall(150, 150, 300, 0)); // top
   wallsList.add(new Wall(150, 150, 0, 300)); // left
   wallsList.add(new Wall(450, 150, 0, 300)); // right
-  
+
   // inside maze walls (simple maze)
   wallsList.add(new Wall(210, 210, 0, 240)); // 1
   wallsList.add(new Wall(270, 390, 0, 60));  // 2
@@ -143,15 +153,15 @@ void setup () {
   wallsList.add(new Wall(270, 210, 0, 120)); // 5
   wallsList.add(new Wall(270, 210, 120, 0)); // 6
   wallsList.add(new Wall(330, 270, 120, 0)); // 7
-  
+
   // maze shit - 3D
-    // outer walls
+  // outer walls
   //wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
   //wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
   //wallsList.add(new Wall(150 - wall_thick, 150, wall_thick, 300)); // left
   //wallsList.add(new Wall(450 - wall_thick, 150, wall_thick, 300)); // right
-  
-  //// inner walls 
+
+  //// inner walls
   //wallsList.add(new Wall(210 - wall_thick/2, 210, wall_thick, 240)); // wall 1
   //wallsList.add(new Wall(270 - wall_thick/2, 390, wall_thick, 60));  // wall 2
   //wallsList.add(new Wall(270, 390 - wall_thick/2, 120, wall_thick)); // wall 3
@@ -159,9 +169,8 @@ void setup () {
   //wallsList.add(new Wall(270 - wall_thick/2, 210, wall_thick, 120)); // wall 5
   //wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
   //wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
-    
- 
-  
+
+  file = new SoundFile(this, "Loop_attempt.mp3");
 }
 
 void draw () {
@@ -170,98 +179,119 @@ void draw () {
   lights();
   stroke(127, 34, 255);     //stroke color
   strokeWeight(4);        //stroke wider
-  
+
   //*****************************************************************
   //***************** Draw Objects in Scene (START) *****************
   //*****************************************************************
 
   //ellipse(300, 300, radius*2, radius*2);
- 
-   float dt = 1.0/frameRate *5;
-   
-   // solving for the horizontal tilt-direction
-   wall_slope_x = tan(current_angle_x);
-   //float len_platform = 600;
-   //float x1_x = width/2 - len_platform/2;
-   //float x2_x = width/2 + len_platform/2;
-   //float y1_x = -wall_slope_x * len_platform/2 + height/2;
-   //float y2_x = wall_slope_x * len_platform/2 + height/2;
-    
-    ballacc_x = g*sin(current_angle_x);
-    
-    ballvel_x_current = ballvel_x_prev + ballacc_x * dt;
-    ballpos_x_current = ballpos_x_prev + (ballvel_x_prev + ballvel_x_current)/2 * dt;
-    
-    // solving for vertical tilt-direction
-    wall_slope_y = 1/tan(current_angle_y);
-    
-   //float x1_y = width/2 - len_platform/2;
-   //float x2_y = width/2 + len_platform/2;
-   //float y1_y = -wall_slope_y * len_platform/2 + height/2;
-   //float y2_y = wall_slope_y * len_platform/2 + height/2;
-    
-    ballacc_y = g*sin(current_angle_y);
-    
-    ballvel_y_current = ballvel_y_prev + ballacc_y * dt;
-    ballpos_y_current = ballpos_y_prev + (ballvel_y_prev + ballvel_y_current)/2 * dt;
-    
-    
-    for (Wall wall : wallsList) {
-      if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
-        ballvel_x_current = 0;
-        ballpos_x_current = ballpos_x_prev; // stay in place
-        x_collision = true;    
-      } 
-      
-      
-      if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
-        ballvel_y_current = 0;
-        ballpos_y_current = ballpos_y_prev; // stay in place  
-        y_collision = true;
-      } 
-      
-    }
-    
-    ballvel_x_prev = ballvel_x_current;
-    ballpos_x_prev = ballpos_x_current;
-    
-    ballvel_y_prev = ballvel_y_current;
-    ballpos_y_prev = ballpos_y_current;
 
-     //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
-    //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
-    
-   // ball - 2D
+  float dt = 1.0/frameRate *5;
+
+  // solving for the horizontal tilt-direction
+  wall_slope_x = tan(current_angle_x);
+  //float len_platform = 600;
+  //float x1_x = width/2 - len_platform/2;
+  //float x2_x = width/2 + len_platform/2;
+  //float y1_x = -wall_slope_x * len_platform/2 + height/2;
+  //float y2_x = wall_slope_x * len_platform/2 + height/2;
+
+  ballacc_x = g*sin(current_angle_x);
+
+  ballvel_x_current = ballvel_x_prev + ballacc_x * dt;
+  ballpos_x_current = ballpos_x_prev + (ballvel_x_prev + ballvel_x_current)/2 * dt;
+
+  // solving for vertical tilt-direction
+  wall_slope_y = 1/tan(current_angle_y);
+
+  //float x1_y = width/2 - len_platform/2;
+  //float x2_y = width/2 + len_platform/2;
+  //float y1_y = -wall_slope_y * len_platform/2 + height/2;
+  //float y2_y = wall_slope_y * len_platform/2 + height/2;
+
+  ballacc_y = g*sin(current_angle_y);
+
+  ballvel_y_current = ballvel_y_prev + ballacc_y * dt;
+  ballpos_y_current = ballpos_y_prev + (ballvel_y_prev + ballvel_y_current)/2 * dt;
+
+
+  for (Wall wall : wallsList) {
+    if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
+      ballvel_x_current = 0;
+      ballpos_x_current = ballpos_x_prev; // stay in place
+      x_collision = true;
+    }
+
+
+    if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
+      ballvel_y_current = 0;
+      ballpos_y_current = ballpos_y_prev; // stay in place
+      y_collision = true;
+    }
+  }
+
+  ballvel_x_prev = ballvel_x_current;
+  ballpos_x_prev = ballpos_x_current;
+
+  ballvel_y_prev = ballvel_y_current;
+  ballpos_y_prev = ballpos_y_current;
+
+  //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
+  //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
+
+  // ball - 2D
   ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-  
+
   // ball - 3D
   //pushMatrix();
   //translate(width/2, height/2, 0);
   //rotateX(-current_angle_y);
   //rotateY(current_angle_x);
   //translate(-width/2, -height/2, 0);
-  
-   for (Wall wall : wallsList) {
-      //wall.display3D();
-       wall.display();
-    }
-    
-     //ball - 3D
-    //fill(255,0,0);
-    //noStroke();
-    //pushMatrix();
-    //translate(ballpos_x_current, ballpos_y_current, -radius);
-    //sphere(radius);
-    //popMatrix();
-    
-    //popMatrix();
-    
-   String ballData = nf(ballpos_x_current, 0, 2) + "," + 
-                  nf(ballpos_y_current, 0, 2) + "\n";
 
-   myPort.write(ballData);
-   //print(ballData);
-    
+  for (Wall wall : wallsList) {
+    //wall.display3D();
+    wall.display();
+  }
+
+  //ball - 3D
+  //fill(255,0,0);
+  //noStroke();
+  //pushMatrix();
+  //translate(ballpos_x_current, ballpos_y_current, -radius);
+  //sphere(radius);
+  //popMatrix();
+
+  //popMatrix();
+
+  String ballData = nf(ballpos_x_current, 0, 2) + "," +
+    nf(ballpos_y_current, 0, 2) + "\n";
+
+  myPort.write(ballData);
+  //print(ballData);
+
+
+  // Audio
+  ballvelmag = sqrt(sq(ballvel_x_current)+sq(ballvel_y_current));
+  if (ballvelmag > minThresh) {
+    play = true;
+  } else {
+    play = false;
+  }
+
+  if (play && !wasPlaying) {
+    file.loop();
+    wasPlaying = true;
+  } else if (!play && wasPlaying) {
+    file.pause();
+    wasPlaying = false;
+  }
+
+  if (play) {
+    // Example: modulate from 0.5x to 2x speed depending on count value
+    speed = map(ballvelmag, minThresh, 50, 0.5, 2.0);
+    file.rate(speed);
+  }
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
   //*****************************************************************
@@ -271,61 +301,56 @@ void serialEvent (Serial myPort) {
   //*****************************************************************
   //** Read in Handle and Mass Positions from Serial Port (START) ***
   //*****************************************************************
-  
+
   // STUDENT CODE HERE
   while (myPort.available() > 0)
+  {
+    myString = myPort.readStringUntil(lf);
+    //print(myString);
+
+    if (myString != null)
     {
-      myString = myPort.readStringUntil(lf);
-      //print(myString);
-      
-      if (myString != null)
-      {
-        myString = myString.trim();
-        String[] values = split(myString, ",");
-        
-        current_angle_x = float(values[0]);
-        current_angle_x = radians(current_angle_x);
-        
-        current_angle_y = float(values[1]);
-        current_angle_y = radians(current_angle_y);
-        
+      myString = myString.trim();
+      String[] values = split(myString, ",");
 
-        // for debugging arduino commands!
-          //float ard_1 = float(values[2]);
-          //float ard_2 = float(values[3]);
-          
-          //String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
-          //          nf(ard_2, 0, 2) + "\n";
-          //print(ardData);
-        
-        
-      }
+      current_angle_x = float(values[0]);
+      current_angle_x = radians(current_angle_x);
 
-      if (Float.isNaN(current_angle_x) ||Float.isNaN(current_angle_y) )
-      {
-        
-        current_angle_x = prev_angle_x;
-        current_angle_y = prev_angle_y;
-      }
-      
-      else
-      {
-        prev_angle_x = current_angle_x;
-        prev_angle_y = current_angle_y;
-      }
+      current_angle_y = float(values[1]);
+      current_angle_y = radians(current_angle_y);
 
+
+      // for debugging arduino commands!
+      //float ard_1 = float(values[2]);
+      //float ard_2 = float(values[3]);
+
+      //String ardData = nf(ard_1, 0, 2) + "\n";// + "," +
+      //          nf(ard_2, 0, 2) + "\n";
+      //print(ardData);
     }
+
+    if (Float.isNaN(current_angle_x) ||Float.isNaN(current_angle_y) )
+    {
+
+      current_angle_x = prev_angle_x;
+      current_angle_y = prev_angle_y;
+    } else
+    {
+      prev_angle_x = current_angle_x;
+      prev_angle_y = current_angle_y;
+    }
+  }
   // (1) read the input string
-    // HINT: use myPort.readStringUntil() with the appropriate argument
-    
+  // HINT: use myPort.readStringUntil() with the appropriate argument
+
   // (2) if the input is null, don't do anything else
-  
+
   // (3) else, trim and convert string to a number
-  
+
   // (4) if the number is NaN, set current value to previous value
   //     otherwise: map the new value to the screen width
   //     & update previous value variable
-  
+
   //*****************************************************************
   //**** Read in Handle and Mass Positions from Serial Port (END) ***
   //*****************************************************************
