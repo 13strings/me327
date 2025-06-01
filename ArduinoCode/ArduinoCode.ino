@@ -10,7 +10,7 @@
 #include <math.h>
 #include "helpers.h"
 #include "me327_AS5048A.h"
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 
 // Pin declares
 int pwmXPin = 5;         // PWM output pin for motor 1
@@ -23,6 +23,7 @@ int fsrPin = A3;         // input pin for FSR sensor
 
 
 int vibMotorPin1 = 9;
+int vibMotorPin2 = 10;
 
 // Position tracking variables
 int updatedPos = 0;      // keeps track of the latest updated value of the MR sensor reading
@@ -111,7 +112,8 @@ int counter = 0;
 unsigned long collisionXStartTime = 0;
 bool vibrationXActive = false;
 
-float current_pos_x = 0, current_pos_y = 0;
+float processing_width = 600;
+float current_pos_x = processing_width*0.5, current_pos_y = processing_width*0.5;
 float prev_pos_x = 0, prev_pos_y = 0;
 
 double dPosx;  // Velocity of the handle
@@ -131,10 +133,12 @@ double dPosy_filt_prev2;
 double dPosMag = 0;
 
 float m = 0.02;
+float fscalefactor = 0.4;
 float g = -9.81;
 
-float forcelim = 0; // max force limit in Nm
-float tslim = 0; // max angle in degrees
+float forcelim = 10.0; // max force limit in Nm
+float tslim = 40.0; // max angle in degrees
+float klim = 20.0;
 
 float rp = 0.5 / 100.0;  // m
 float rs = 5.08 / 100;    // m
@@ -143,7 +147,6 @@ float j = rh * rp / rs;
 
 float force_x = 0;
 float pulley_torque_x = 0;
-float processing_width = 600;
 float duty_x = 0;
 
 float force_y = 0;
@@ -296,8 +299,8 @@ void loop() {
   double rh = 8.0 / 100;     // m
   double j = rh * rp / rs;
 
-  double ts = slopePos * updatedPos - offsetPos;
-  double tsF = slopePosF * updatedPosF - offsetPosF;
+  double ts = -slopePos * (updatedPos - offsetPos);
+  double tsF = -slopePosF * (updatedPosF - offsetPosF);
 
   /* Old Depreciated Code
   //xh = rh * ts * M_PI / 180;
@@ -351,9 +354,9 @@ void loop() {
 
 
   if (counter % 100 == 0) {
-    Serial.print(ts, 2);
+    Serial.print(ts,2);
     Serial.print(",");
-    Serial.println(tsF, 2);  // sending values to processing
+    Serial.println(tsF,2);  // sending values to processing
 
     // for debugging arduino stuff by sending to processing - rm "ln" from line above
     //Serial.print(",");
@@ -368,7 +371,7 @@ void loop() {
   force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0);
   pulley_torque_x = j * force_x;
 
-  /*
+  
   if (force_x > forcelim) {
     force_x = forcelim;
   }
@@ -376,13 +379,13 @@ void loop() {
     force_x = -1 * forcelim;
   }
 
-  if (ts > tslim) {
-    force_x = 0;
-  }
-  if (ts < -1 * tslim) {
-    force_x = 0;
-  }
-  */
+  // if (ts > tslim) {
+  //   force_x += (-klim)*(ts-tslim);
+  // }
+  // if (ts < -1 * tslim) {
+  //   force_x += (-klim)*(ts+tslim);
+  // }
+  
 
   if (force_x > 0) {
     digitalWrite(dirXPin, LOW);
@@ -391,10 +394,10 @@ void loop() {
   }
 
   // Motor B
-  force_y = (current_pos_y - processing_width / 2) * m * g * cos(ts * M_PI / 180.0);
+  force_y = (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);
   pulley_torque_y = j * force_y;
 
-  /*
+  
   if (force_y > forcelim) {
     force_y = forcelim;
   }
@@ -402,13 +405,13 @@ void loop() {
     force_y = -1 * forcelim;
   }
 
-  if (tsF > tslim) {
-    force_x = 0;
-  }
-  if (tsF < -1 * tslim) {
-    force_x = 0;
-  }
-  */
+  // if (tsF > tslim) {
+  //   force_x += (-klim)*(ts-tslim);
+  // }
+  // if (tsF < -1 * tslim) {
+  //   force_x += (-klim)*(ts+tslim);
+  // }
+  
 
   if (force_y > 0) {
     digitalWrite(dirYPin, LOW);
@@ -426,7 +429,7 @@ void loop() {
   } else if (duty_x < 0) {
     duty_x = 0;
   }
-  unsigned int output_x = (int)(0.15 * duty_x * 255);  // convert duty cycle to output signal
+  unsigned int output_x = (int)(fscalefactor* duty_x * 255);  // convert duty cycle to output signal
   analogWrite(pwmXPin, output_x);                      // output the signal
 
   if (duty_y > 1) {
@@ -434,7 +437,7 @@ void loop() {
   } else if (duty_y < 0) {
     duty_y = 0;
   }
-  unsigned int output_y = (int)(0.15 * duty_y * 255);  // convert duty cycle to output signal
+  unsigned int output_y = (int)(fscalefactor * duty_y * 255);  // convert duty cycle to output signal
   analogWrite(pwmYPin, output_y);                      // output the signal
 
 

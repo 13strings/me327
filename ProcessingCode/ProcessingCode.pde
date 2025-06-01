@@ -60,6 +60,12 @@ float ballacc_x;
 float ballacc_y;
 float g = 9.81; // m/s2
 
+boolean x_collision = false;
+boolean y_collision = false;
+
+boolean x_prev_collision = false;
+boolean y_prev_collision = false;
+
 class Wall {
   float x,y,w,h;
   float wallHeight = 10;
@@ -91,9 +97,7 @@ class Wall {
 // maze shit
 ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
-// coms with collisions
- boolean collisionXSent = false;
- boolean collisionYSent = false;
+
 
 //*****************************************************************
 //******************* Initialize Variables (END) ******************
@@ -102,7 +106,10 @@ ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
 void setup () {
   // set the window size:
-  size(600, 600, P3D);
+  // size - 3D
+  //size(600, 600, P3D); 
+  // size - 2D
+  size(600, 600); 
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
@@ -112,7 +119,7 @@ void setup () {
   // Check the listed serial ports in your machine
   // and use the correct index number in Serial.list()[].
 
-  myPort = new Serial(this, Serial.list()[0], 115200);  //make sure baud rate matches Arduino
+  myPort = new Serial(this, Serial.list()[1], 115200);  //make sure baud rate matches Arduino
 
   // A serialEvent() is generated when a newline character is received :
   myPort.bufferUntil('\n');
@@ -121,36 +128,37 @@ void setup () {
   
  
   
-  // maze shit 
-  //// creating the maze
-  //wallsList.add(new Wall(150,450,300,0)); // bot
-  //wallsList.add(new Wall(150, 150, 300, 0)); // top
-  //wallsList.add(new Wall(150, 150, 0, 300)); // left
-  //wallsList.add(new Wall(450, 150, 0, 300)); // right
+  // maze shit - 2D
+  // creating the maze
+  wallsList.add(new Wall(150,450,300,0)); // bot
+  wallsList.add(new Wall(150, 150, 300, 0)); // top
+  wallsList.add(new Wall(150, 150, 0, 300)); // left
+  wallsList.add(new Wall(450, 150, 0, 300)); // right
   
-  //// inside maze walls (simple maze)
-  //wallsList.add(new Wall(210, 210, 0, 240)); // 1
-  //wallsList.add(new Wall(270, 390, 0, 60));  // 2
-  //wallsList.add(new Wall(270, 390, 120, 0)); // 3
-  //wallsList.add(new Wall(270, 330, 120, 0)); // 4
-  //wallsList.add(new Wall(270, 210, 0, 120)); // 5
-  //wallsList.add(new Wall(270, 210, 120, 0)); // 6
-  //wallsList.add(new Wall(330, 270, 120, 0)); // 7
+  // inside maze walls (simple maze)
+  wallsList.add(new Wall(210, 210, 0, 240)); // 1
+  wallsList.add(new Wall(270, 390, 0, 60));  // 2
+  wallsList.add(new Wall(270, 390, 120, 0)); // 3
+  wallsList.add(new Wall(270, 330, 120, 0)); // 4
+  wallsList.add(new Wall(270, 210, 0, 120)); // 5
+  wallsList.add(new Wall(270, 210, 120, 0)); // 6
+  wallsList.add(new Wall(330, 270, 120, 0)); // 7
   
+  // maze shit - 3D
     // outer walls
-  wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
-  wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
-  wallsList.add(new Wall(150 - wall_thick, 150, wall_thick, 300)); // left
-  wallsList.add(new Wall(450 - wall_thick, 150, wall_thick, 300)); // right
+  //wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
+  //wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
+  //wallsList.add(new Wall(150 - wall_thick, 150, wall_thick, 300)); // left
+  //wallsList.add(new Wall(450 - wall_thick, 150, wall_thick, 300)); // right
   
-  // inner walls 
-  wallsList.add(new Wall(210 - wall_thick/2, 210, wall_thick, 240)); // wall 1
-  wallsList.add(new Wall(270 - wall_thick/2, 390, wall_thick, 60));  // wall 2
-  wallsList.add(new Wall(270, 390 - wall_thick/2, 120, wall_thick)); // wall 3
-  wallsList.add(new Wall(270, 330 - wall_thick/2, 120, wall_thick)); // wall 4
-  wallsList.add(new Wall(270 - wall_thick/2, 210, wall_thick, 120)); // wall 5
-  wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
-  wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
+  //// inner walls 
+  //wallsList.add(new Wall(210 - wall_thick/2, 210, wall_thick, 240)); // wall 1
+  //wallsList.add(new Wall(270 - wall_thick/2, 390, wall_thick, 60));  // wall 2
+  //wallsList.add(new Wall(270, 390 - wall_thick/2, 120, wall_thick)); // wall 3
+  //wallsList.add(new Wall(270, 330 - wall_thick/2, 120, wall_thick)); // wall 4
+  //wallsList.add(new Wall(270 - wall_thick/2, 210, wall_thick, 120)); // wall 5
+  //wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
+  //wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
     
  
   
@@ -183,8 +191,6 @@ void draw () {
     
     ballvel_x_current = ballvel_x_prev + ballacc_x * dt;
     ballpos_x_current = ballpos_x_prev + (ballvel_x_prev + ballvel_x_current)/2 * dt;
-     
-
     
     // solving for vertical tilt-direction
     wall_slope_y = 1/tan(current_angle_y);
@@ -204,14 +210,14 @@ void draw () {
       if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
         ballvel_x_current = 0;
         ballpos_x_current = ballpos_x_prev; // stay in place
-                     
+        x_collision = true;    
       } 
       
       
       if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
         ballvel_y_current = 0;
         ballpos_y_current = ballpos_y_prev; // stay in place  
-        
+        y_collision = true;
       } 
       
     }
@@ -225,27 +231,30 @@ void draw () {
      //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
     //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
     
-   
-  //ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
+   // ball - 2D
+  ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
   
-  pushMatrix();
-  translate(width/2, height/2, 0);
-  rotateX(-current_angle_y);
-  rotateY(current_angle_x);
-  translate(-width/2, -height/2, 0);
+  // ball - 3D
+  //pushMatrix();
+  //translate(width/2, height/2, 0);
+  //rotateX(-current_angle_y);
+  //rotateY(current_angle_x);
+  //translate(-width/2, -height/2, 0);
   
    for (Wall wall : wallsList) {
-      wall.display3D();
+      //wall.display3D();
+       wall.display();
     }
     
-    fill(255,0,0);
-    noStroke();
-    pushMatrix();
-    translate(ballpos_x_current, ballpos_y_current, -radius);
-    sphere(radius);
-    popMatrix();
+     //ball - 3D
+    //fill(255,0,0);
+    //noStroke();
+    //pushMatrix();
+    //translate(ballpos_x_current, ballpos_y_current, -radius);
+    //sphere(radius);
+    //popMatrix();
     
-    popMatrix();
+    //popMatrix();
     
    String ballData = nf(ballpos_x_current, 0, 2) + "," + 
                   nf(ballpos_y_current, 0, 2) + "\n";
