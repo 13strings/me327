@@ -14,9 +14,11 @@
  */
 
 import processing.serial.*;
+import processing.sound.*;
 
 Serial myPort;        // The serial port
 
+SoundFile file;
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
@@ -36,8 +38,12 @@ float ballvel_y_current = 0;
 float ballpos_y_prev = width/2;
 float ballvel_y_prev = 0;
 
+// Vel Magnitude
+float ballvelmag = 0;
+float minThresh = 1.0;
+
 // getting values from serial
-int lf = 10; 
+int lf = 10;
 String myString = null;
 
 // mapping shit
@@ -66,6 +72,7 @@ boolean y_collision = false;
 boolean x_prev_collision = false;
 boolean y_prev_collision = false;
 
+
 float x_coll_string; 
 float y_coll_string;
 
@@ -73,8 +80,14 @@ int impulse_count_x = 0;
 int impulse_count_y = 0;
 int impulse_size = 300;
 
+//Audio shit
+boolean play = false;
+boolean wasPlaying = false;
+float speed = 1.0;
+
+
 class Wall {
-  float x,y,w,h;
+  float x, y, w, h;
   float wallHeight = 10;
   Wall (float x, float y, float w, float h) {
     this.x = x;
@@ -82,24 +95,27 @@ class Wall {
     this.w = w;
     this.h = h;
   }
-  
+
   void display() {
+
     rect(x,y,w,h);
+
   }
-  
+
   void display3D() {
     pushMatrix();
     translate(x + w/2, y + h/2, -wallHeight/2);
     fill(200);
     box(w, h, wallHeight); // 3D wall
     popMatrix();
-    
   }
+
     boolean isXColliding(float ballX, float ballY, float radius) {
       return (ballX + radius >= x && ballX - radius <= x + w) && (ballY + radius >= y && ballY - radius <= y + h);
     }
     boolean isYColliding(float ballX, float ballY, float radius){
       return (ballY + radius >= y && ballY - radius <= y + h) && (ballX + radius >= x && ballX - radius <= x + w);
+
   }
   // old bad code
   //boolean isColliding(float ballX, float ballY, float radius){
@@ -121,9 +137,9 @@ ArrayList<Wall> wallsList = new ArrayList<Wall>();
 void setup () {
   // set the window size:
   // size - 3D
-  //size(600, 600, P3D); 
+  //size(600, 600, P3D);
   // size - 2D
-  size(600, 600); 
+  size(600, 600);
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
@@ -139,11 +155,12 @@ void setup () {
   myPort.bufferUntil('\n');
   background(0);      // set inital background:
   lights();
-  
- 
-  
+
+
+
   // maze shit - 2D
   // creating the maze
+
   wallsList.add(new Wall(150,450,300,2)); // bot
   wallsList.add(new Wall(150, 150, 300, 2)); // top
   wallsList.add(new Wall(150, 150, 2, 300)); // left
@@ -158,14 +175,15 @@ void setup () {
   wallsList.add(new Wall(270, 210, 120, 2)); // 6
   wallsList.add(new Wall(330, 270, 120, 2)); // 7
   
+
   // maze shit - 3D
-    // outer walls
+  // outer walls
   //wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
   //wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
   //wallsList.add(new Wall(150 - wall_thick, 150, wall_thick, 300)); // left
   //wallsList.add(new Wall(450 - wall_thick, 150, wall_thick, 300)); // right
-  
-  //// inner walls 
+
+  //// inner walls
   //wallsList.add(new Wall(210 - wall_thick/2, 210, wall_thick, 240)); // wall 1
   //wallsList.add(new Wall(270 - wall_thick/2, 390, wall_thick, 60));  // wall 2
   //wallsList.add(new Wall(270, 390 - wall_thick/2, 120, wall_thick)); // wall 3
@@ -173,9 +191,8 @@ void setup () {
   //wallsList.add(new Wall(270 - wall_thick/2, 210, wall_thick, 120)); // wall 5
   //wallsList.add(new Wall(270, 210 - wall_thick/2, 120, wall_thick)); // wall 6
   //wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
-    
- 
-  
+
+  file = new SoundFile(this, "Loop_attempt.mp3");
 }
 
 void draw () {
@@ -184,12 +201,13 @@ void draw () {
   lights();
   stroke(127, 34, 255);     //stroke color
   strokeWeight(4);        //stroke wider
-  
+
   //*****************************************************************
   //***************** Draw Objects in Scene (START) *****************
   //*****************************************************************
 
   //ellipse(300, 300, radius*2, radius*2);
+
  
    float dt = 1.0/frameRate *5;
    
@@ -247,12 +265,13 @@ void draw () {
     ballvel_y_prev = ballvel_y_current;
     ballpos_y_prev = ballpos_y_current;
 
-     //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
-    //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
-    
-   // ball - 2D
+
+  //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
+  //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
+
+  // ball - 2D
   ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-  
+
   // ball - 3D
   //pushMatrix();
   //translate(width/2, height/2, 0);
@@ -265,7 +284,7 @@ void draw () {
        wall.display();
     }
     
-    ellipse(150,450,radius ,radius);
+   // ellipse(150,450,radius ,radius);
     
      //ball - 3D
     //fill(255,0,0);
@@ -322,7 +341,30 @@ void draw () {
    y_coll_string = 0;
    x_collision = false;
    y_collision = false;
-    
+  
+
+  // Audio
+  ballvelmag = sqrt(sq(ballvel_x_current)+sq(ballvel_y_current));
+  if (ballvelmag > minThresh) {
+    play = true;
+  } else {
+    play = false;
+  }
+
+  if (play && !wasPlaying) {
+    file.loop();
+    wasPlaying = true;
+  } else if (!play && wasPlaying) {
+    file.pause();
+    wasPlaying = false;
+  }
+
+  if (play) {
+    // Example: modulate from 0.5x to 2x speed depending on count value
+    speed = map(ballvelmag, minThresh, 50, 0.5, 2.0);
+    file.rate(speed);
+  }
+
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
   //*****************************************************************
