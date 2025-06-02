@@ -66,6 +66,13 @@ boolean y_collision = false;
 boolean x_prev_collision = false;
 boolean y_prev_collision = false;
 
+float x_coll_string; 
+float y_coll_string;
+
+int impulse_count_x = 0;
+int impulse_count_y = 0;
+int impulse_size = 300;
+
 class Wall {
   float x,y,w,h;
   float wallHeight = 10;
@@ -77,7 +84,7 @@ class Wall {
   }
   
   void display() {
-    rect(x,y,w, h);
+    rect(x,y,w,h);
   }
   
   void display3D() {
@@ -88,10 +95,17 @@ class Wall {
     popMatrix();
     
   }
-    boolean isColliding(float ballX, float ballY, float radius) {
-    return ballX + radius >= x && ballX - radius <= x + w &&
-           ballY + radius >= y && ballY - radius <= y + h;
+    boolean isXColliding(float ballX, float ballY, float radius) {
+      return (ballX + radius >= x && ballX - radius <= x + w) && (ballY + radius >= y && ballY - radius <= y + h);
+    }
+    boolean isYColliding(float ballX, float ballY, float radius){
+      return (ballY + radius >= y && ballY - radius <= y + h) && (ballX + radius >= x && ballX - radius <= x + w);
   }
+  // old bad code
+  //boolean isColliding(float ballX, float ballY, float radius){
+  //  return ballX + radius >= x && ballX - radius <= x + w &&  
+  //  ballY + radius >= y && ballY - radius <= y + h;
+  //}
 }
 
 // maze shit
@@ -119,7 +133,7 @@ void setup () {
   // Check the listed serial ports in your machine
   // and use the correct index number in Serial.list()[].
 
-  myPort = new Serial(this, Serial.list()[1], 115200);  //make sure baud rate matches Arduino
+  myPort = new Serial(this, Serial.list()[0], 115200);  //make sure baud rate matches Arduino
 
   // A serialEvent() is generated when a newline character is received :
   myPort.bufferUntil('\n');
@@ -130,19 +144,19 @@ void setup () {
   
   // maze shit - 2D
   // creating the maze
-  wallsList.add(new Wall(150,450,300,0)); // bot
-  wallsList.add(new Wall(150, 150, 300, 0)); // top
-  wallsList.add(new Wall(150, 150, 0, 300)); // left
-  wallsList.add(new Wall(450, 150, 0, 300)); // right
+  wallsList.add(new Wall(150,450,300,2)); // bot
+  wallsList.add(new Wall(150, 150, 300, 2)); // top
+  wallsList.add(new Wall(150, 150, 2, 300)); // left
+  wallsList.add(new Wall(450, 150, 2, 300)); // right
   
   // inside maze walls (simple maze)
-  wallsList.add(new Wall(210, 210, 0, 240)); // 1
-  wallsList.add(new Wall(270, 390, 0, 60));  // 2
-  wallsList.add(new Wall(270, 390, 120, 0)); // 3
-  wallsList.add(new Wall(270, 330, 120, 0)); // 4
-  wallsList.add(new Wall(270, 210, 0, 120)); // 5
-  wallsList.add(new Wall(270, 210, 120, 0)); // 6
-  wallsList.add(new Wall(330, 270, 120, 0)); // 7
+  wallsList.add(new Wall(210, 210, 2, 240)); // 1
+  wallsList.add(new Wall(270, 390, 2, 60));  // 2
+  wallsList.add(new Wall(270, 390, 120, 2)); // 3
+  wallsList.add(new Wall(270, 330, 120, 2)); // 4
+  wallsList.add(new Wall(270, 210, 2, 120)); // 5
+  wallsList.add(new Wall(270, 210, 120, 2)); // 6
+  wallsList.add(new Wall(330, 270, 120, 2)); // 7
   
   // maze shit - 3D
     // outer walls
@@ -207,17 +221,22 @@ void draw () {
     
     
     for (Wall wall : wallsList) {
-      if (wall.isColliding(ballpos_x_current, ballpos_y_prev, radius)) {
+      if (wall.isXColliding(ballpos_x_current, ballpos_y_prev, radius)) {
         ballvel_x_current = 0;
         ballpos_x_current = ballpos_x_prev; // stay in place
-        x_collision = true;    
+        x_collision = true; 
+        //print("X WALL\n");
+        break;
       } 
-      
-      
-      if (wall.isColliding(ballpos_x_current, ballpos_y_current, radius)) {
+    }
+    
+  for (Wall wall : wallsList) {
+      if (wall.isYColliding(ballpos_x_current, ballpos_y_current, radius)) {
         ballvel_y_current = 0;
         ballpos_y_current = ballpos_y_prev; // stay in place  
         y_collision = true;
+        //print("Y WALL\n");
+        break;
       } 
       
     }
@@ -246,6 +265,8 @@ void draw () {
        wall.display();
     }
     
+    ellipse(150,450,radius ,radius);
+    
      //ball - 3D
     //fill(255,0,0);
     //noStroke();
@@ -256,11 +277,51 @@ void draw () {
     
     //popMatrix();
     
-   String ballData = nf(ballpos_x_current, 0, 2) + "," + 
-                  nf(ballpos_y_current, 0, 2) + "\n";
+    if (x_collision && (!x_prev_collision))
+    {
+       x_coll_string = 1;
+       impulse_count_x ++; //= impulse_count_x +1; 
+    }
 
+    
+    if (y_collision && (!y_prev_collision))
+    {
+       y_coll_string = 1;
+       impulse_count_y ++; 
+    }
+    
+    if (x_collision && impulse_count_x <= impulse_size)
+    {
+    x_prev_collision = false;
+    }
+    else
+    {
+      x_prev_collision = x_collision;
+    }
+    
+    if (y_collision && impulse_count_y <= impulse_size)
+    {
+    y_prev_collision = false; 
+    }
+    else
+    {
+      y_prev_collision = y_collision;
+    }
+    
+   String ballData = nf(ballpos_x_current, 0, 2) + "," + // x pos 
+                  nf(ballpos_y_current, 0, 2) +  "," + // y pos
+                  nf(x_coll_string,0,2) + "," + // x coll
+                  nf(y_coll_string,0,2) + "\n"; // y coll
+                    
    myPort.write(ballData);
-   //print(ballData);
+
+   print(ballData);
+   
+   
+   x_coll_string = 0;
+   y_coll_string = 0;
+   x_collision = false;
+   y_collision = false;
     
   //*****************************************************************
   //****************** Draw Objects in Scene (END) ******************
@@ -289,14 +350,26 @@ void serialEvent (Serial myPort) {
         current_angle_y = float(values[1]);
         current_angle_y = radians(current_angle_y);
         
+        String ardData = nf(current_angle_x, 0, 2) + "," + 
+                    nf(current_angle_y, 0, 2) + "\n";
 
         // for debugging arduino commands!
           //float ard_1 = float(values[2]);
+          
           //float ard_2 = float(values[3]);
           
-          //String ardData = nf(ard_1, 0, 2) + "\n";// + "," + 
+          //String ardData = nf(ard_1, 0, 2) + "," + 
           //          nf(ard_2, 0, 2) + "\n";
+                    
           //print(ardData);
+          
+          //String ard_1 = values[2];
+          //print(current_angle_x);
+          //print(",");
+          //print(current_angle_y);
+          //print(",");
+          //print(ard_1);
+          //print("\n");
         
         
       }
