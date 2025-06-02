@@ -240,7 +240,8 @@ void draw () {
     
     for (Wall wall : wallsList) {
       if (wall.isXColliding(ballpos_x_current, ballpos_y_prev, radius)) {
-        ballvel_x_current = 0;
+        //ballvel_x_current = 0;
+        ballvel_x_current = -0.3*ballvel_x_current;
         ballpos_x_current = ballpos_x_prev; // stay in place
         x_collision = true; 
         //print("X WALL\n");
@@ -250,7 +251,8 @@ void draw () {
     
   for (Wall wall : wallsList) {
       if (wall.isYColliding(ballpos_x_current, ballpos_y_current, radius)) {
-        ballvel_y_current = 0;
+        //ballvel_y_current = 0;
+        ballvel_y_current = -0.3*ballvel_y_current;
         ballpos_y_current = ballpos_y_prev; // stay in place  
         y_collision = true;
         //print("Y WALL\n");
