@@ -160,6 +160,10 @@ float frequency = 50.0; // Base surface frequency (Hz)
 unsigned long lastTime = 0;
 float phase = 0.0;
 
+// collision
+float x_coll;
+float y_coll;
+
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
 // --------------------------------------------------------------
@@ -326,19 +330,38 @@ void loop() {
   dxh_filt_prev = dxh_filt;*/
 
   if (Serial.available() > 0) {
-    String string_received = Serial.readStringUntil('\n');  // Read command
-    // Clean it
+    String string_recieved = Serial.readStringUntil('\n');  
+    
+    String strArray[5];
+    int index = 0;
+    int start = 0;
+    int end = 0;
 
-    int commaIndex = string_received.indexOf(',');
+     while ((end = string_recieved.indexOf(',', start)) > -1) {
+    strArray[index] = string_recieved.substring(start, end);
+    start = end + 1;
+    index++;
+    }
 
-    if (commaIndex != -1) {
-      String xStr = string_received.substring(0, commaIndex);
-      String yStr = string_received.substring(commaIndex + 1);
+    strArray[index] = string_recieved.substring(start); // Get the last part
 
-      float temp_x = xStr.toFloat();
-      float temp_y = yStr.toFloat();
 
-      // NaN check isn't really needed, but here's a workaround in Arduino:
+
+    // int commaIndex = string_recieved.indexOf(',');
+
+    // if (commaIndex != -1) {
+    //   String xStr = string_recieved.substring(0, commaIndex);
+    //   String yStr = string_recieved.substring(commaIndex + 1);
+    //   x_coll = string_recieved.substring(commaIndex + 2);
+    //   y_coll = string_recieved.substring(commaIndex + 3);
+      
+
+       float temp_x = strArray[0].toFloat();
+       float temp_y = strArray[1].toFloat();
+       x_coll = strArray[2].toFloat();
+       y_coll = strArray[3].toFloat();
+
+      
       if (!isnan(temp_x) && !isnan(temp_y)) {
         prev_pos_x = current_pos_x;
         prev_pos_y = current_pos_y;
@@ -350,7 +373,26 @@ void loop() {
         current_pos_y = prev_pos_y;
       }
     }
-  }
+  
+ dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
+
+  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
+
+  dPosx_prev2 = dPosx_prev;
+  dPosx_prev = dPosx;
+
+  dPosx_filt_prev2 = dPosx_filt_prev;
+  dPosx_filt_prev = dPosx_filt;
+
+  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
+
+  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
+
+  dPosy_prev2 = dPosy_prev;
+  dPosy_prev = dPosy;
+
+  dPosy_filt_prev2 = dPosy_filt_prev;
+  dPosy_filt_prev = dPosy_filt;
 
 
   if (counter % 100 == 0) {
@@ -359,16 +401,16 @@ void loop() {
     Serial.println(tsF,2);  // sending values to processing
 
     // for debugging arduino stuff by sending to processing - rm "ln" from line above
-    //Serial.print(",");
-    //Serial.println(pulley_torque_x,2);
     // Serial.print(",");
-    // Serial.println(current_pos_y,2);
+    // Serial.print(x_coll);
+    // Serial.print(",");
+    // Serial.println(y_coll);
   }
 
   counter++;
 
   // motor commands based on position of ball and relative moment
-  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0);
+  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*1000;
   pulley_torque_x = j * force_x;
 
   
@@ -442,25 +484,25 @@ void loop() {
 
 
   // Rolling Vibration
-  dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
+  // dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
 
-  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
+  // dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
 
-  dPosx_prev2 = dPosx_prev;
-  dPosx_prev = dPosx;
+  // dPosx_prev2 = dPosx_prev;
+  // dPosx_prev = dPosx;
 
-  dPosx_filt_prev2 = dPosx_filt_prev;
-  dPosx_filt_prev = dPosx_filt;
+  // dPosx_filt_prev2 = dPosx_filt_prev;
+  // dPosx_filt_prev = dPosx_filt;
 
-  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
+  // dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
 
-  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
+  // dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
 
-  dPosy_prev2 = dPosy_prev;
-  dPosy_prev = dPosy;
+  // dPosy_prev2 = dPosy_prev;
+  // dPosy_prev = dPosy;
 
-  dPosy_filt_prev2 = dPosy_filt_prev;
-  dPosy_filt_prev = dPosy_filt;
+  // dPosy_filt_prev2 = dPosy_filt_prev;
+  // dPosy_filt_prev = dPosy_filt;
 
   dPosMag = sqrt(sq(dPosx_filt)+sq(dPosy_filt));
 
