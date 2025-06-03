@@ -117,7 +117,7 @@ class Wall {
   }
 
     boolean isXColliding(float ballX, float ballY, float radius) {
-      return (ballX + radius >= x && ballX - radius <= x + w) && (ballY + radius >= y && ballY - radius <= y + h);
+      return (ballX + radius >= x  && ballX - radius <= x + w) && (ballY + radius >= y && ballY - radius <= y + h);
     }
     boolean isYColliding(float ballX, float ballY, float radius){
       return (ballY + radius >= y && ballY - radius <= y + h) && (ballX + radius >= x && ballX - radius <= x + w);
@@ -145,7 +145,7 @@ void setup () {
   // size - 3D
   //size(600, 600, P3D);
   // size - 2D
-    size(1450, 850); 
+ size(1450, 850); 
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
@@ -161,86 +161,84 @@ void setup () {
   myPort.bufferUntil('\n');
   background(0);      // set inital background:
   lights();
-  strokeWeight(4);
-  fill(255, 10, 10);
-  triangle(50 + 7 * 90 - 45, 65 + 30, 50 + 7 * 90 -30, 65 + 60, 50 + 7 * 90 - 60, 65 + 60);
-  fill(10, 255, 10);
-  triangle(50 + 90 - 45, 65 + 7 * 90 + 30, 50 + 90 - 30, 65 + 7 * 90 + 60, 50 + 90 - 60, 65 + 7 * 90 + 60);
- 
+
+
 
   // maze shit - 2D
   // creating the maze
 
-  //wallsList.add(new Wall(150,450,300,2)); // bot
-  //wallsList.add(new Wall(150, 150, 300, 2)); // top
-  //wallsList.add(new Wall(150, 150, 2, 300)); // left
-  //wallsList.add(new Wall(450, 150, 2, 300)); // right
+  wallsList.add(new Wall(150,450,300,2)); // bot
+  wallsList.add(new Wall(150, 150, 300, 2)); // top
+  wallsList.add(new Wall(150, 150, 2, 300)); // left
+  wallsList.add(new Wall(450, 150, 2, 300)); // right
   
-  //// inside maze walls (simple maze)
-  //wallsList.add(new Wall(210, 210, 2, 240)); // 1
-  //wallsList.add(new Wall(270, 390, 2, 60));  // 2
-  //wallsList.add(new Wall(270, 390, 120, 2)); // 3
-  //wallsList.add(new Wall(270, 330, 120, 2)); // 4
-  //wallsList.add(new Wall(270, 210, 2, 120)); // 5
-  //wallsList.add(new Wall(270, 210, 120, 2)); // 6
-  //wallsList.add(new Wall(330, 270, 120, 2)); // 7
+  // inside maze walls (simple maze)
+  wallsList.add(new Wall(210, 210, 2, 240)); // 1
+  wallsList.add(new Wall(270, 390, 2, 60));  // 2
+  wallsList.add(new Wall(270, 390, 120, 2)); // 3
+  wallsList.add(new Wall(270, 330, 120, 2)); // 4
+  wallsList.add(new Wall(270, 210, 2, 120)); // 5
+  wallsList.add(new Wall(270, 210, 120, 2)); // 6
+  wallsList.add(new Wall(330, 270, 120, 2)); // 7
   
   
-  wallsList.add(new Wall(50, 65, 1350, 2)); // bot
-  wallsList.add(new Wall(50, 785, 1350, 2)); // top
-  wallsList.add(new Wall(50, 65, 2, 720)); // left
-  wallsList.add(new Wall(1400, 65, 2, 720)); // right
+  //wallsList.add(new Wall(50, 65, 1350, 0)); // bot
+  //wallsList.add(new Wall(50, 785, 1350, 0)); // top
+  //wallsList.add(new Wall(50, 65, 0, 720)); // left
+  //wallsList.add(new Wall(1400, 65, 0, 720)); // right
   
-  // inside maze walls (simple maze) // mid width = 725, mid height = 425
-  wallsList.add(new Wall(50 + 90, 65 + 90, 2, 90)); // 1
-  wallsList.add(new Wall(50 + 90, 65 + 180, 450, 2));  // 2
-  wallsList.add(new Wall(50, 270 + 65, 450, 2)); // 3
-  wallsList.add(new Wall(50 + 90, 360 + 65, 90*3, 2)); // 4
-  wallsList.add(new Wall(50 + 90, 360 + 65, 2, 180)); // 4
-  wallsList.add(new Wall(50 + 90, 90*6 + 65, 90, 2)); // 4
-  wallsList.add(new Wall(50 + 90, 65 + 90, 90, 2)); // 4
-  wallsList.add(new Wall(50 + 90*3, 65, 2, 90)); // 4
-  wallsList.add(new Wall(50 + 90*5, 65, 2, 90)); // 4
-  wallsList.add(new Wall(50 + 90*7, 65, 2, 90*3)); // 4
-  wallsList.add(new Wall(50 + 90*4, 65 + 90, 2, 90)); // 4
-  wallsList.add(new Wall(50 + 90*4, 65 + 90*4, 2, 90)); // 4
-  wallsList.add(new Wall(50 + 90*4, 65 + 90*6, 2, 90*2)); // 4
-  wallsList.add(new Wall(50 + 90*2, 65 + 90*5, 90*2, 2)); // 4
-  wallsList.add(new Wall(50 + 90, 65 + 90*6, 90*3, 2 )); // 4
-  wallsList.add(new Wall(50, 65 + 90*7, 90*3, 2)); // 4
-  wallsList.add(new Wall(50 + 90*4, 65 + 90*6, 2, 90*2)); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90, 2, 90*2)); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*3, 90*2, 2)); // 4
-  wallsList.add(new Wall(50 + 90*7, 65, 2, 90*3)); // 4
-  wallsList.add(new Wall(50 + 90*8, 65+90, 2, 90*1)); // 4
-  wallsList.add(new Wall(50 + 90*8, 65 + 90*2, 90*6, 2)); // 4
-  wallsList.add(new Wall(50 + 90*9, 65 + 90, 90*6, 2)); // 4
-  wallsList.add(new Wall(50 + 90*5, 65 + 90*3, 2, 90*4)); // 4
-  wallsList.add(new Wall(50 + 90*5, 65 + 90*7, 90, 2)); // 4
-  wallsList.add(new Wall(50 + 90*5, 65 + 90*8, 90, 2)); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*4, 2, 90)); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*4, 90*3, 2)); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*5, 90, 2 )); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*6, 90*2, 2 )); // 4
-  wallsList.add(new Wall(50 + 90*6, 65 + 90*6, 2, 90 )); // 4
-  wallsList.add(new Wall(50 + 90*8, 65 + 90*5, 2, 90 )); // 4
-  wallsList.add(new Wall(50 + 90*8, 65 + 90*5, 90*4, 2 )); // 4
-  wallsList.add(new Wall(50 + 90*10, 65 + 90*4, 2, 90*3 )); // 4
-  wallsList.add(new Wall(50 + 90*10, 65 + 90*4, 90, 2 )); // 4
-  wallsList.add(new Wall(50 + 90*11, 65 + 90*3, 2, 90 )); // 4
-  wallsList.add(new Wall(50 + 90*12, 65 + 90*2, 2, 90*5 )); // 4
-  wallsList.add(new Wall(50 + 90*13, 65 + 90*3, 90, 2 ));
-  wallsList.add(new Wall(50 + 90*13, 65 + 90*3, 2, 90 ));
-  wallsList.add(new Wall(50 + 90*13, 65 + 90*4, 90*2, 2 ));
-  wallsList.add(new Wall(50 + 90*13, 65 + 90*5, 2, 90*3 ));
-  wallsList.add(new Wall(50 + 90*13, 65 + 90*4, 90, 2 ));
-  wallsList.add(new Wall(50 + 90*14, 65 + 90*6, 2, 90 ));
-  wallsList.add(new Wall(50 + 90*14, 65 + 90*7, 90, 2 ));
-  wallsList.add(new Wall(50 + 90*11, 65 + 90*6, 2, 90*2 ));
-  wallsList.add(new Wall(50 + 90*9, 65 + 90*6, 2, 90*2 ));
-  wallsList.add(new Wall(50 + 90*7, 65 + 90*7, 90*2, 2 ));
-  wallsList.add(new Wall(50 + 90*9, 65 + 90*2, 2, 90*2 ));
-  wallsList.add(new Wall(50 + 90*9, 65 + 90*3, 90, 2 ));
+  //// inside maze walls (simple maze) // mid width = 725, mid height = 425
+  //wallsList.add(new Wall(50 + 90, 65 + 90, 2, 90)); // 1
+  //wallsList.add(new Wall(50 + 90, 65 + 180, 450, 2));  // 2
+  //wallsList.add(new Wall(50, 270 + 65, 450, 2)); // 3
+  //wallsList.add(new Wall(50 + 90, 360 + 65, 90*3, 2)); // 4
+  //wallsList.add(new Wall(50 + 90, 360 + 65, 2, 180)); // 4
+  //wallsList.add(new Wall(50 + 90, 90*6 + 65, 90,2)); // 4
+  //wallsList.add(new Wall(50 + 90, 65 + 90, 90,2)); // 4
+  //wallsList.add(new Wall(50 + 90*3, 65,2, 90)); // 4
+  //wallsList.add(new Wall(50 + 90*5, 65,2, 90)); // 4
+  //wallsList.add(new Wall(50 + 90*7, 65,2, 90*3)); // 4
+  //wallsList.add(new Wall(50 + 90*4, 65 + 90,2, 90)); // 4
+  //wallsList.add(new Wall(50 + 90*4, 65 + 90*4,2, 90)); // 4
+  //wallsList.add(new Wall(50 + 90*4, 65 + 90*6,2, 90*2)); // 4
+  //wallsList.add(new Wall(50 + 90*2, 65 + 90*5, 90*2,2)); // 4
+  //wallsList.add(new Wall(50 + 90, 65 + 90*6, 90*3,2 )); // 4
+  //wallsList.add(new Wall(50, 65 + 90*7, 90*3,2)); // 4
+  //wallsList.add(new Wall(50 + 90*4, 65 + 90*6,2, 90*2)); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90,2, 90*2)); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*3, 90*2,2)); // 4
+  //wallsList.add(new Wall(50 + 90*7, 65,2, 90*3)); // 4
+  //wallsList.add(new Wall(50 + 90*8, 65+90,2, 90*1)); // 4
+  //wallsList.add(new Wall(50 + 90*8, 65 + 90*2, 90*6,2)); // 4
+  //wallsList.add(new Wall(50 + 90*9, 65 + 90, 90*6,2)); // 4
+  //wallsList.add(new Wall(50 + 90*5, 65 + 90*3,2, 90*4)); // 4
+  //wallsList.add(new Wall(50 + 90*5, 65 + 90*7, 90,2)); // 4
+  //wallsList.add(new Wall(50 + 90*5, 65 + 90*8, 90,2)); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*4,2, 90)); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*4, 90*3,2)); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*5, 90,2 )); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*6, 90*2,2 )); // 4
+  //wallsList.add(new Wall(50 + 90*6, 65 + 90*6,2, 90 )); // 4
+  //wallsList.add(new Wall(50 + 90*8, 65 + 90*5,2, 90 )); // 4
+  //wallsList.add(new Wall(50 + 90*8, 65 + 90*5, 90*4,2 )); // 4
+  //wallsList.add(new Wall(50 + 90*10, 65 + 90*4,2, 90*3 )); // 4
+  //wallsList.add(new Wall(50 + 90*10, 65 + 90*4, 90,2 )); // 4
+  //wallsList.add(new Wall(50 + 90*11, 65 + 90*3,2, 90 )); // 4
+  //wallsList.add(new Wall(50 + 90*12, 65 + 90*2,2, 90*5 )); // 4
+  //wallsList.add(new Wall(50 + 90*13, 65 + 90*3, 90,2 ));
+  //wallsList.add(new Wall(50 + 90*13, 65 + 90*3,2, 90 ));
+  //wallsList.add(new Wall(50 + 90*13, 65 + 90*4, 90*2,2 ));
+  //wallsList.add(new Wall(50 + 90*13, 65 + 90*5,2, 90*3 ));
+  //wallsList.add(new Wall(50 + 90*13, 65 + 90*4, 90,2 ));
+  //wallsList.add(new Wall(50 + 90*14, 65 + 90*6,2, 90 ));
+  //wallsList.add(new Wall(50 + 90*14, 65 + 90*7, 90,2 ));
+  //wallsList.add(new Wall(50 + 90*11, 65 + 90*6,2, 90*2 ));
+  //wallsList.add(new Wall(50 + 90*9, 65 + 90*6,2, 90*2 ));
+  //wallsList.add(new Wall(50 + 90*7, 65 + 90*7, 90*2,2 ));
+  //wallsList.add(new Wall(50 + 90*9, 65 + 90*2,2, 90*2 ));
+  //wallsList.add(new Wall(50 + 90*9, 65 + 90*3, 90,2 ));
+  
+  
   
 
   // maze shit - 3D
@@ -265,18 +263,16 @@ void setup () {
 }
 
 void draw () {
-  
   // everything happens in the serialEvent()
   background(0); //uncomment if you want to control a ball
   lights();
-  stroke(127, 34, 255);     //stroke color
-  strokeWeight(4);        //stroke wider
-  
-  fill(255, 10, 10);
+  //stroke(255, 10, 10);
   triangle(50 + 7 * 90 - 45, 65 + 30, 50 + 7 * 90 -30, 65 + 60, 50 + 7 * 90 - 60, 65 + 60);
-  fill(10, 255, 10);
+  ///stroke(10, 255, 10);
   triangle(50 + 90 - 45, 65 + 7 * 90 + 30, 50 + 90 - 30, 65 + 7 * 90 + 60, 50 + 90 - 60, 65 + 7 * 90 + 60);
- 
+  
+  
+  strokeWeight(4);        //stroke wider
 
   //*****************************************************************
   //***************** Draw Objects in Scene (START) *****************
@@ -359,10 +355,9 @@ void draw () {
 
   // ball - 2D
   if (showBall == true){
-    strokeWeight(0); 
-    fill(255, 255, 57);
+    //stroke(255, 255, 57);     //stroke color
+    //strokeWeight(2);  
   ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-
   }
   // ball - 3D
   //pushMatrix();
@@ -373,8 +368,8 @@ void draw () {
   
    for (Wall wall : wallsList) {
       //wall.display3D();
-      strokeWeight(0); 
-      fill(20, 20, 255);
+      //stroke(20, 20, 255);
+      //strokeWeight(4);  
        wall.display();
     }
     
