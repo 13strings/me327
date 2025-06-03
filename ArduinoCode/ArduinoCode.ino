@@ -130,7 +130,7 @@ double dPosy_filt;  // Filtered velocity of the handle
 double dPosy_filt_prev;
 double dPosy_filt_prev2;
 
-double dPosMag = 0;
+float dPosMag = 0;
 
 float m = 0.02;
 float fscalefactor = 0.4;
@@ -360,7 +360,7 @@ void loop() {
        float temp_y = strArray[1].toFloat();
        x_coll = strArray[2].toFloat();
        y_coll = strArray[3].toFloat();
-       float dPosMag = strArray[4].toFloat();
+       dPosMag = strArray[4].toFloat();
 
       
       if (!isnan(temp_x) && !isnan(temp_y)) {
@@ -375,25 +375,7 @@ void loop() {
       }
     }
   
- dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
-
-  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
-
-  dPosx_prev2 = dPosx_prev;
-  dPosx_prev = dPosx;
-
-  dPosx_filt_prev2 = dPosx_filt_prev;
-  dPosx_filt_prev = dPosx_filt;
-
-  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
-
-  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
-
-  dPosy_prev2 = dPosy_prev;
-  dPosy_prev = dPosy;
-
-  dPosy_filt_prev2 = dPosy_filt_prev;
-  dPosy_filt_prev = dPosy_filt;
+ 
 
 
   if (counter % 100 == 0) {
@@ -412,12 +394,32 @@ void loop() {
 
   // motor commands based on position of ball and relative moment
   if (current_pos_x >= 290 && current_pos_x <= 320){
-    force_x = 0.1*(current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*10000;
+    force_x = 0.1*(current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*0.5;
   } else {
-  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*10000;
+  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*0.5;
   }
   
   pulley_torque_x = j * force_x;
+
+  dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
+
+  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
+
+  dPosx_prev2 = dPosx_prev;
+  dPosx_prev = dPosx;
+
+  dPosx_filt_prev2 = dPosx_filt_prev;
+  dPosx_filt_prev = dPosx_filt;
+
+  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
+
+  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
+
+  dPosy_prev2 = dPosy_prev;
+  dPosy_prev = dPosy;
+
+  dPosy_filt_prev2 = dPosy_filt_prev;
+  dPosy_filt_prev = dPosy_filt;
 
   
   if (force_x > forcelim) {
