@@ -29,19 +29,19 @@ boolean showBall = true;
 
 // BALL STUFF FOR X
 // current ball pos, vel
-float ballpos_x_current;
+float ballpos_x_current = 300;
 float ballvel_x_current = 0;
 // prev ball pos, vel
 
 float ballpos_x_prev = 300;
-float ballvel_x_prev = 300;
+float ballvel_x_prev = 0;
 
 // BALL STUFF FOR Y
 // current ball pos, vel
-float ballpos_y_current;
+float ballpos_y_current = 300;
 float ballvel_y_current = 0;
 // prev ball pos, vel
-float ballpos_y_prev = 115;
+float ballpos_y_prev = 300;
 float ballvel_y_prev = 0;
 
 // Vel Magnitude
