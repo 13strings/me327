@@ -401,25 +401,7 @@ void loop() {
   
   pulley_torque_x = j * force_x;
 
-  dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
-
-  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
-
-  dPosx_prev2 = dPosx_prev;
-  dPosx_prev = dPosx;
-
-  dPosx_filt_prev2 = dPosx_filt_prev;
-  dPosx_filt_prev = dPosx_filt;
-
-  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
-
-  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
-
-  dPosy_prev2 = dPosy_prev;
-  dPosy_prev = dPosy;
-
-  dPosy_filt_prev2 = dPosy_filt_prev;
-  dPosy_filt_prev = dPosy_filt;
+ 
 
   
   if (force_x > forcelim) {
@@ -472,6 +454,26 @@ void loop() {
   } else {
     digitalWrite(dirYPin, HIGH);
   }
+
+   dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
+
+  dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
+
+  dPosx_prev2 = dPosx_prev;
+  dPosx_prev = dPosx;
+
+  dPosx_filt_prev2 = dPosx_filt_prev;
+  dPosx_filt_prev = dPosx_filt;
+
+  dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
+
+  dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
+
+  dPosy_prev2 = dPosy_prev;
+  dPosy_prev = dPosy;
+
+  dPosy_filt_prev2 = dPosy_filt_prev;
+  dPosy_filt_prev = dPosy_filt;
 
   // Compute the duty cycle required to generate Tp (torque at the motor pulley)
   duty_x = sqrt(abs(pulley_torque_x) / 0.03);
