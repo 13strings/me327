@@ -12,6 +12,8 @@
  
  
  */
+ 
+ boolean hardMode = true;
 
 import processing.serial.*;
 import processing.sound.*;
@@ -31,7 +33,8 @@ boolean showBall = true;
 float ballpos_x_current;
 float ballvel_x_current = 0;
 // prev ball pos, vel
-float ballpos_x_prev = width/2;
+
+float ballpos_x_prev = 635;
 float ballvel_x_prev = 0;
 
 // BALL STUFF FOR Y
@@ -39,7 +42,7 @@ float ballvel_x_prev = 0;
 float ballpos_y_current;
 float ballvel_y_current = 0;
 // prev ball pos, vel
-float ballpos_y_prev = width/2;
+float ballpos_y_prev = 115;
 float ballvel_y_prev = 0;
 
 // Vel Magnitude
@@ -145,11 +148,21 @@ void setup () {
   // size - 3D
   //size(600, 600, P3D);
   // size - 2D
-    size(1450, 850); 
+  if (hardMode == true){
+  size(1450, 850); 
+  ballpos_x_current = 635;
+  ballpos_y_current = 115;
+  ballpos_x_prev = 635;
+  ballpos_y_prev = 115;
+  }
+  
+  if (hardMode == false){
+    size(600, 600); 
   ballpos_x_current = 300;
   ballpos_y_current = 300;
   ballpos_x_prev = 300;
   ballpos_y_prev = 300;
+  }
   // List all the available serial ports
   //println(Serial.list());
   // Check the listed serial ports in your machine
@@ -162,30 +175,33 @@ void setup () {
   background(0);      // set inital background:
   lights();
   strokeWeight(4);
+  
+  if (hardMode == true){
   fill(255, 10, 10);
   triangle(50 + 7 * 90 - 45, 65 + 30, 50 + 7 * 90 -30, 65 + 60, 50 + 7 * 90 - 60, 65 + 60);
   fill(10, 255, 10);
   triangle(50 + 90 - 45, 65 + 7 * 90 + 30, 50 + 90 - 30, 65 + 7 * 90 + 60, 50 + 90 - 60, 65 + 7 * 90 + 60);
- 
+  }
 
   // maze shit - 2D
   // creating the maze
-
-  //wallsList.add(new Wall(150,450,300,2)); // bot
-  //wallsList.add(new Wall(150, 150, 300, 2)); // top
-  //wallsList.add(new Wall(150, 150, 2, 300)); // left
-  //wallsList.add(new Wall(450, 150, 2, 300)); // right
+  if (hardMode == false){
+  wallsList.add(new Wall(150,450,300,2)); // bot
+  wallsList.add(new Wall(150, 150, 300, 2)); // top
+  wallsList.add(new Wall(150, 150, 2, 300)); // left
+  wallsList.add(new Wall(450, 150, 2, 300)); // right
   
-  //// inside maze walls (simple maze)
-  //wallsList.add(new Wall(210, 210, 2, 240)); // 1
-  //wallsList.add(new Wall(270, 390, 2, 60));  // 2
-  //wallsList.add(new Wall(270, 390, 120, 2)); // 3
-  //wallsList.add(new Wall(270, 330, 120, 2)); // 4
-  //wallsList.add(new Wall(270, 210, 2, 120)); // 5
-  //wallsList.add(new Wall(270, 210, 120, 2)); // 6
-  //wallsList.add(new Wall(330, 270, 120, 2)); // 7
+  // inside maze walls (simple maze)
+  wallsList.add(new Wall(210, 210, 2, 240)); // 1
+  wallsList.add(new Wall(270, 390, 2, 60));  // 2
+  wallsList.add(new Wall(270, 390, 120, 2)); // 3
+  wallsList.add(new Wall(270, 330, 120, 2)); // 4
+  wallsList.add(new Wall(270, 210, 2, 120)); // 5
+  wallsList.add(new Wall(270, 210, 120, 2)); // 6
+  wallsList.add(new Wall(330, 270, 120, 2)); // 7
+  }
   
-  
+  if (hardMode == true){
   wallsList.add(new Wall(50, 65, 1350, 2)); // bot
   wallsList.add(new Wall(50, 785, 1350, 2)); // top
   wallsList.add(new Wall(50, 65, 2, 720)); // left
@@ -241,7 +257,7 @@ void setup () {
   wallsList.add(new Wall(50 + 90*7, 65 + 90*7, 90*2, 2 ));
   wallsList.add(new Wall(50 + 90*9, 65 + 90*2, 2, 90*2 ));
   wallsList.add(new Wall(50 + 90*9, 65 + 90*3, 90, 2 ));
-  
+  }
 
   // maze shit - 3D
   // outer walls
@@ -272,11 +288,12 @@ void draw () {
   stroke(127, 34, 255);     //stroke color
   strokeWeight(4);        //stroke wider
   
+  if (hardMode == true){
   fill(255, 10, 10);
   triangle(50 + 7 * 90 - 45, 65 + 30, 50 + 7 * 90 -30, 65 + 60, 50 + 7 * 90 - 60, 65 + 60);
   fill(10, 255, 10);
   triangle(50 + 90 - 45, 65 + 7 * 90 + 30, 50 + 90 - 30, 65 + 7 * 90 + 60, 50 + 90 - 60, 65 + 7 * 90 + 60);
- 
+  }
 
   //*****************************************************************
   //***************** Draw Objects in Scene (START) *****************
