@@ -24,6 +24,8 @@ SoundFile collisionSoundy;
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
+boolean showBall = true;
+
 // BALL STUFF FOR X
 // current ball pos, vel
 float ballpos_x_current;
@@ -288,8 +290,9 @@ void draw () {
   //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
 
   // ball - 2D
+  if (showBall == true){
   ellipse(ballpos_x_current, ballpos_y_current, radius*2, radius*2);
-
+  }
   // ball - 3D
   //pushMatrix();
   //translate(width/2, height/2, 0);
@@ -468,4 +471,12 @@ void serialEvent (Serial myPort) {
   //*****************************************************************
   //**** Read in Handle and Mass Positions from Serial Port (END) ***
   //*****************************************************************
+}
+
+void keyPressed()
+{
+  if (key == TAB)
+  {
+    showBall = !showBall;
+  }
 }
