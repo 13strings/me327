@@ -19,6 +19,8 @@ import processing.sound.*;
 Serial myPort;        // The serial port
 
 SoundFile file;
+SoundFile collisionSoundx;
+SoundFile collisionSoundy;
 //*****************************************************************
 //****************** Initialize Variables (START) *****************
 //*****************************************************************
@@ -78,12 +80,14 @@ float y_coll_string;
 
 int impulse_count_x = 0;
 int impulse_count_y = 0;
-int impulse_size = 300;
+int impulse_size = 500;
 
 //Audio shit
 boolean play = false;
 boolean wasPlaying = false;
 float speed = 1.0;
+float volume_x = 0.0;
+float volume_y = 0.0;
 
 
 class Wall {
@@ -193,6 +197,8 @@ void setup () {
   //wallsList.add(new Wall(330, 270 - wall_thick/2, 120, wall_thick)); // wall 7
 
   file = new SoundFile(this, "Loop_attempt.mp3");
+  collisionSoundx = new SoundFile(this, "collision.wav");
+  collisionSoundy = new SoundFile(this, "collision.wav");
 }
 
 void draw () {
@@ -244,7 +250,12 @@ void draw () {
         ballvel_x_current = -0.3*ballvel_x_current;
         ballpos_x_current = ballpos_x_prev; // stay in place
         x_collision = true; 
-        //print("X WALL\n");
+        if(abs(ballvel_x_current) > 1) {
+          volume_x = map(abs(ballvel_x_current), 0, 40, 0, 1);
+          println(volume_x);
+          collisionSoundx.amp(volume_x);
+          collisionSoundx.play();
+        }
         break;
       } 
     }
@@ -255,7 +266,11 @@ void draw () {
         ballvel_y_current = -0.3*ballvel_y_current;
         ballpos_y_current = ballpos_y_prev; // stay in place  
         y_collision = true;
-        //print("Y WALL\n");
+        if(abs(ballvel_y_current) > 1) {
+          volume_y = map(abs(ballvel_y_current), 0, 40, 0, 1);
+          collisionSoundy.amp(volume_y);
+          collisionSoundy.play();
+        }
         break;
       } 
       
@@ -266,7 +281,7 @@ void draw () {
     
     ballvel_y_prev = ballvel_y_current;
     ballpos_y_prev = ballpos_y_current;
-
+    
 
   //line(x1_x, y1_x, x2_x, y2_x); // horizontal tilt
   //line(x1_y, y1_y, x2_y, y2_y); // horizontal tilt
@@ -329,14 +344,20 @@ void draw () {
       y_prev_collision = y_collision;
     }
     
+    // audio mag calcs
+    ballvelmag = sqrt(sq(ballvel_x_current)+sq(ballvel_y_current));
+    
+    // sending 2 arduino
    String ballData = nf(ballpos_x_current, 0, 2) + "," + // x pos 
                   nf(ballpos_y_current, 0, 2) +  "," + // y pos
                   nf(x_coll_string,0,2) + "," + // x coll
-                  nf(y_coll_string,0,2) + "\n"; // y coll
+                  nf(y_coll_string,0,2) + "," + // y coll
+                  nf(ballvelmag,0,2 )+ "\n"; // magnitude
+                  
                     
    myPort.write(ballData);
 
-   print(ballData);
+   //print(ballData);
    
    
    x_coll_string = 0;
@@ -346,7 +367,7 @@ void draw () {
   
 
   // Audio
-  ballvelmag = sqrt(sq(ballvel_x_current)+sq(ballvel_y_current));
+  
   if (ballvelmag > minThresh) {
     play = true;
   } else {
@@ -394,18 +415,18 @@ void serialEvent (Serial myPort) {
         current_angle_y = float(values[1]);
         current_angle_y = radians(current_angle_y);
         
-        String ardData = nf(current_angle_x, 0, 2) + "," + 
-                    nf(current_angle_y, 0, 2) + "\n";
+        //String ardData = nf(current_angle_x, 0, 2) + "," + 
+        //            nf(current_angle_y, 0, 2) + "\n";
 
         // for debugging arduino commands!
-          //float ard_1 = float(values[2]);
+          float ard_1 = float(values[2]);
           
           //float ard_2 = float(values[3]);
           
-          //String ardData = nf(ard_1, 0, 2) + "," + 
-          //          nf(ard_2, 0, 2) + "\n";
+          String ardData = nf(ard_1, 0, 2) + "\n" ;//+ 
+                  //  nf(ard_2, 0, 2) + "\n";
                     
-          //print(ardData);
+          print(ardData);
           
           //String ard_1 = values[2];
           //print(current_angle_x);
