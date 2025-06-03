@@ -153,7 +153,7 @@ void setup () {
   // Check the listed serial ports in your machine
   // and use the correct index number in Serial.list()[].
 
-  myPort = new Serial(this, Serial.list()[0], 115200);  //make sure baud rate matches Arduino
+  myPort = new Serial(this, Serial.list()[4], 115200);  //make sure baud rate matches Arduino
 
   // A serialEvent() is generated when a newline character is received :
   myPort.bufferUntil('\n');
@@ -247,6 +247,7 @@ void draw () {
     for (Wall wall : wallsList) {
       if (wall.isXColliding(ballpos_x_current, ballpos_y_prev, radius)) {
         //ballvel_x_current = 0;
+      
         ballvel_x_current = -0.3*ballvel_x_current;
         ballpos_x_current = ballpos_x_prev; // stay in place
         x_collision = true; 

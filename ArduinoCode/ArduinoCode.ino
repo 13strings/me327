@@ -113,8 +113,8 @@ unsigned long collisionXStartTime = 0;
 bool vibrationXActive = false;
 
 float processing_width = 600;
-float current_pos_x = processing_width*0.5, current_pos_y = processing_width*0.5;
-float prev_pos_x = 0, prev_pos_y = 0;
+float current_pos_x = processing_width * 0.5, current_pos_y = processing_width * 0.5;
+float prev_pos_x = processing_width * 0.5, prev_pos_y = processing_width * 0.5;
 
 double dPosx;  // Velocity of the handle
 double dPosx_prev;
@@ -136,12 +136,12 @@ float m = 0.02;
 float fscalefactor = 0.4;
 float g = -9.81;
 
-float forcelim = 30.0; // max force limit in Nm
-float tslim = 40.0; // max angle in degrees
+float forcelim = 30.0;  // max force limit in Nm
+float tslim = 40.0;     // max angle in degrees
 float klim = 20.0;
 
 float rp = 0.5 / 100.0;  // m
-float rs = 5.08 / 100;    // m
+float rs = 5.08 / 100;   // m
 float rh = 8.0 / 100;    // m
 float j = rh * rp / rs;
 
@@ -155,14 +155,28 @@ float duty_y = 0;
 
 //Vibration
 unsigned long currentTime = 0;
-float timeStep = 0.02;  // Simulation step (seconds)
-float frequency = 50.0; // Base surface frequency (Hz)
+float timeStep = 0.02;   // Simulation step (seconds)
+float frequency = 50.0;  // Base surface frequency (Hz)
 unsigned long lastTime = 0;
 float phase = 0.0;
 
 // collision
 float x_coll;
 float y_coll;
+
+const unsigned long impactDuration = 110;      // Vibration length in ms
+const unsigned long collisionCooldown = 600;   // Minimum time between vibrations in ms
+
+// ==== Runtime Variables ====
+bool prevCollisionX = false;
+bool motorOnX = false;
+unsigned long motorStartTimeX = 0;
+unsigned long lastTriggerTimeX = 0;
+
+bool prevCollisionY = false;
+bool motorOnY = false;
+unsigned long motorStartTimeY = 0;
+unsigned long lastTriggerTimeY = 0;
 
 // --------------------------------------------------------------
 // Setup function -- NO NEED TO EDIT
@@ -214,7 +228,7 @@ void setup() {
 // Main Loop
 // --------------------------------------------------------------
 void loop() {
-  currentTime = accurate_micros()*0.001;
+  currentTime = accurate_micros() * 0.001;
   //*************************************************************
   //*** Section 1. Compute position in counts (do not change) ***
   //*************************************************************
@@ -299,7 +313,7 @@ void loop() {
 
   // MAG to DEGREE CALCS
   double rp = 1.25 / 100.0;  // m
-  double rs = 5.08 / 100;     // m
+  double rs = 5.08 / 100;    // m
   double rh = 8.0 / 100;     // m
   double j = rh * rp / rs;
 
@@ -330,20 +344,20 @@ void loop() {
   dxh_filt_prev = dxh_filt;*/
 
   if (Serial.available() > 0) {
-    String string_recieved = Serial.readStringUntil('\n');  
-    
+    String string_recieved = Serial.readStringUntil('\n');
+
     String strArray[5];
     int index = 0;
     int start = 0;
     int end = 0;
 
-     while ((end = string_recieved.indexOf(',', start)) > -1) {
-    strArray[index] = string_recieved.substring(start, end);
-    start = end + 1;
-    index++;
+    while ((end = string_recieved.indexOf(',', start)) > -1) {
+      strArray[index] = string_recieved.substring(start, end);
+      start = end + 1;
+      index++;
     }
 
-    strArray[index] = string_recieved.substring(start); // Get the last part
+    strArray[index] = string_recieved.substring(start);  // Get the last part
 
 
 
@@ -354,56 +368,93 @@ void loop() {
     //   String yStr = string_recieved.substring(commaIndex + 1);
     //   x_coll = string_recieved.substring(commaIndex + 2);
     //   y_coll = string_recieved.substring(commaIndex + 3);
-      
 
-       float temp_x = strArray[0].toFloat();
-       float temp_y = strArray[1].toFloat();
-       x_coll = strArray[2].toFloat();
-       y_coll = strArray[3].toFloat();
-       dPosMag = strArray[4].toFloat();
 
-      
-      if (!isnan(temp_x) && !isnan(temp_y)) {
-        prev_pos_x = current_pos_x;
-        prev_pos_y = current_pos_y;
-        current_pos_x = temp_x;
-        current_pos_y = temp_y;
+    float temp_x = strArray[0].toFloat();
+    float temp_y = strArray[1].toFloat();
+    x_coll = strArray[2].toFloat();
+    y_coll = strArray[3].toFloat();
+    dPosMag = strArray[4].toFloat();
 
-      } else {
-        current_pos_x = prev_pos_x;
-        current_pos_y = prev_pos_y;
-      }
+
+    if (!isnan(temp_x) && !isnan(temp_y)) {
+      prev_pos_x = current_pos_x;
+      prev_pos_y = current_pos_y;
+      current_pos_x = temp_x;
+      current_pos_y = temp_y;
+
+    } else {
+      current_pos_x = prev_pos_x;
+      current_pos_y = prev_pos_y;
     }
-  
- 
+  }
+
+
 
 
   if (counter % 100 == 0) {
-    Serial.print(ts,2);
+    Serial.print(ts, 2);
     Serial.print(",");
-    Serial.print(tsF,2);  // sending values to processing
+    Serial.print(tsF, 2);  // sending values to processing
 
     // for debugging arduino stuff by sending to processing - rm/add!!! "ln" from line above
-     Serial.print(",");
-     Serial.println(force_x);
+    Serial.print(",");
+    Serial.println(force_x);
     // Serial.print(",");
     // Serial.println(y_coll);
   }
 
   counter++;
 
+
+bool currentCollisionX = (x_coll == 1);  // Ball touching wall on X axis
+bool risingEdgeX = currentCollisionX && !prevCollisionX;
+
+if (risingEdgeX && currentTime - lastTriggerTimeX > collisionCooldown) {
+  analogWrite(vibMotorPin1, 200);  // Turn on motor for X collision
+  motorOnX = true;
+  motorStartTimeX = currentTime;
+  lastTriggerTimeX = currentTime;
+}
+
+if (motorOnX && currentTime - motorStartTimeX > impactDuration) {
+  analogWrite(vibMotorPin1, 0);  // Turn off motor for X collision
+  motorOnX = false;
+}
+
+prevCollisionX = currentCollisionX;  // Update for next loop
+
+
+// For Y collision
+bool currentCollisionY = (y_coll == 1);  // Ball touching wall on Y axis
+bool risingEdgeY = currentCollisionY && !prevCollisionY;
+
+if (risingEdgeY && currentTime - lastTriggerTimeY > collisionCooldown) {
+  analogWrite(vibMotorPin2, 200);  // Turn on motor for Y collision (using second motor pin)
+  motorOnY = true;
+  motorStartTimeY = currentTime;
+  lastTriggerTimeY = currentTime;
+}
+
+if (motorOnY && currentTime - motorStartTimeY > impactDuration) {
+  analogWrite(vibMotorPin2, 0);  // Turn off motor for Y collision
+  motorOnY = false;
+}
+
+prevCollisionY = currentCollisionY;  
+
   // motor commands based on position of ball and relative moment
-  if (current_pos_x >= 290 && current_pos_x <= 320){
-    force_x = 0.1*(current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*0.5;
+  if (current_pos_x >= 290 && current_pos_x <= 320) {
+    force_x = 0.1 * (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0);
   } else {
-  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*0.5;
+    force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0);
   }
-  
+
   pulley_torque_x = j * force_x;
 
- 
 
-  
+
+
   if (force_x > forcelim) {
     force_x = forcelim;
   }
@@ -417,7 +468,7 @@ void loop() {
   // if (ts < -1 * tslim) {
   //   force_x += (-klim)*(ts+tslim);
   // }
-  
+
 
   if (force_x > 0) {
     digitalWrite(dirXPin, LOW);
@@ -426,14 +477,14 @@ void loop() {
   }
 
   // Motor B
-   if (current_pos_y >= 290 && current_pos_y <= 320){
-    force_y = 0.1*(current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);// + y_coll*dPosx_filt*10000;
+  if (current_pos_y >= 290 && current_pos_y <= 320) {
+    force_y = 0.1 * (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);  // + y_coll*dPosx_filt*2;
   } else {
-  force_y = (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);
+    force_y = (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);
   }
   pulley_torque_y = j * force_y;
 
-  
+
   if (force_y > forcelim) {
     force_y = forcelim;
   }
@@ -447,7 +498,7 @@ void loop() {
   // if (tsF < -1 * tslim) {
   //   force_x += (-klim)*(ts+tslim);
   // }
-  
+
 
   if (force_y > 0) {
     digitalWrite(dirYPin, LOW);
@@ -455,7 +506,13 @@ void loop() {
     digitalWrite(dirYPin, HIGH);
   }
 
-   dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
+  int pwmValue = (int)(0.4 * 255);
+
+  //analogWrite(vibMotorPin1, x_coll*pwmValue);
+  // analogWrite(vibMotorPin2, y_coll*pwmValue);
+
+
+  dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
 
   dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
 
@@ -485,8 +542,8 @@ void loop() {
   } else if (duty_x < 0) {
     duty_x = 0;
   }
-  unsigned int output_x = (int)(fscalefactor* duty_x * 255);  // convert duty cycle to output signal
-  analogWrite(pwmXPin, output_x);                      // output the signal
+  unsigned int output_x = (int)(fscalefactor * duty_x * 255);  // convert duty cycle to output signal
+  analogWrite(pwmXPin, output_x);                              // output the signal
 
   if (duty_y > 1) {
     duty_y = 1;
@@ -494,46 +551,7 @@ void loop() {
     duty_y = 0;
   }
   unsigned int output_y = (int)(fscalefactor * duty_y * 255);  // convert duty cycle to output signal
-  analogWrite(pwmYPin, output_y);                      // output the signal
-
-
-  // Rolling Vibration
-  // dPosx = (double)(current_pos_x - prev_pos_x) / 0.001;
-
-  // dPosx_filt = .9 * dPosx + 0.1 * dPosx_prev;
-
-  // dPosx_prev2 = dPosx_prev;
-  // dPosx_prev = dPosx;
-
-  // dPosx_filt_prev2 = dPosx_filt_prev;
-  // dPosx_filt_prev = dPosx_filt;
-
-  // dPosy = (double)(current_pos_y - prev_pos_y) / 0.001;
-
-  // dPosy_filt = .9 * dPosy + 0.1 * dPosy_prev;
-
-  // dPosy_prev2 = dPosy_prev;
-  // dPosy_prev = dPosy;
-
-  // dPosy_filt_prev2 = dPosy_filt_prev;
-  // dPosy_filt_prev = dPosy_filt;
-
-  dPosMag = sqrt(sq(dPosx_filt)+sq(dPosy_filt));
-
-  if (currentTime - lastTime >= timeStep * 1000) {
-    lastTime = currentTime;
-
-    // Generate vibration pattern: sine wave modulated by "rolling speed"
-    phase += dPosMag * frequency * timeStep;
-    if (phase > 1.0) phase -= 1.0;
-
-    // Create a roughness pattern (simple rectified sine)
-    float vibration = abs(sin(phase * 2 * PI)); // Range: 0 to 1
-    int pwmValue = (int)(vibration * 255);     // Scale to PWM
-
-    analogWrite(vibMotorPin1, pwmValue);
-  }
-
+  analogWrite(pwmYPin, output_y);                              // output the signal
 }
 //*************************************************************
 //******* Assign a Motor Output Force in Newtons (END) ********
