@@ -112,9 +112,14 @@ int counter = 0;
 unsigned long collisionXStartTime = 0;
 bool vibrationXActive = false;
 
-float processing_width = 600;
-float current_pos_x = processing_width * 0.5, current_pos_y = processing_width * 0.5;
-float prev_pos_x = processing_width * 0.5, prev_pos_y = processing_width * 0.5;
+float processing_width = 720; // hard mode
+float processing_height = 400; 
+
+// float processing_width = 300; // easy mode
+// float processing_height = 300;
+
+float current_pos_x = processing_width * 0.5, current_pos_y = processing_height * 0.5;
+float prev_pos_x = processing_width * 0.5, prev_pos_y = processing_height * 0.5;
 
 double dPosx;  // Velocity of the handle
 double dPosx_prev;
@@ -478,9 +483,9 @@ prevCollisionY = currentCollisionY;
 
   // Motor B
   if (current_pos_y >= 290 && current_pos_y <= 320) {
-    force_y = 0.1 * (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);  // + y_coll*dPosx_filt*2;
+    force_y = 0.1 * (current_pos_y - processing_height / 2) * m * g * cos(tsF * M_PI / 180.0);  // + y_coll*dPosx_filt*2;
   } else {
-    force_y = (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);
+    force_y = (current_pos_y - processing_height / 2) * m * g * cos(tsF * M_PI / 180.0);
   }
   pulley_torque_y = j * force_y;
 
