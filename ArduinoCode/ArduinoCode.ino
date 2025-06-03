@@ -136,7 +136,7 @@ float m = 0.02;
 float fscalefactor = 0.4;
 float g = -9.81;
 
-float forcelim = 10.0; // max force limit in Nm
+float forcelim = 30.0; // max force limit in Nm
 float tslim = 40.0; // max angle in degrees
 float klim = 20.0;
 
@@ -360,6 +360,7 @@ void loop() {
        float temp_y = strArray[1].toFloat();
        x_coll = strArray[2].toFloat();
        y_coll = strArray[3].toFloat();
+       float dPosMag = strArray[4].toFloat();
 
       
       if (!isnan(temp_x) && !isnan(temp_y)) {
@@ -398,11 +399,11 @@ void loop() {
   if (counter % 100 == 0) {
     Serial.print(ts,2);
     Serial.print(",");
-    Serial.println(tsF,2);  // sending values to processing
+    Serial.print(tsF,2);  // sending values to processing
 
-    // for debugging arduino stuff by sending to processing - rm "ln" from line above
-    // Serial.print(",");
-    // Serial.print(x_coll);
+    // for debugging arduino stuff by sending to processing - rm/add!!! "ln" from line above
+     Serial.print(",");
+     Serial.println(force_x);
     // Serial.print(",");
     // Serial.println(y_coll);
   }
@@ -410,7 +411,12 @@ void loop() {
   counter++;
 
   // motor commands based on position of ball and relative moment
-  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*1000;
+  if (current_pos_x >= 290 && current_pos_x <= 320){
+    force_x = 0.1*(current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*10000;
+  } else {
+  force_x = (current_pos_x - processing_width / 2) * m * g * cos(ts * M_PI / 180.0) + x_coll*dPosx_filt*10000;
+  }
+  
   pulley_torque_x = j * force_x;
 
   
@@ -436,7 +442,11 @@ void loop() {
   }
 
   // Motor B
+   if (current_pos_y >= 290 && current_pos_y <= 320){
+    force_y = 0.1*(current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);// + y_coll*dPosx_filt*10000;
+  } else {
   force_y = (current_pos_y - processing_width / 2) * m * g * cos(tsF * M_PI / 180.0);
+  }
   pulley_torque_y = j * force_y;
 
   
@@ -518,7 +528,6 @@ void loop() {
     int pwmValue = (int)(vibration * 255);     // Scale to PWM
 
     analogWrite(vibMotorPin1, pwmValue);
-    analogWrite(vibMotorPin2, pwmValue);
   }
 
 }
