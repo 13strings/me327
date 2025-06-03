@@ -518,6 +518,7 @@ void loop() {
     int pwmValue = (int)(vibration * 255);     // Scale to PWM
 
     analogWrite(vibMotorPin1, pwmValue);
+    analogWrite(vibMotorPin2, pwmValue);
   }
 
 }
