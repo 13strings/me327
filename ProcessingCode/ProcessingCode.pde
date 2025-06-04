@@ -12,7 +12,7 @@
  
  
  */
-// wtf
+
 
 import processing.serial.*;
 import processing.sound.*;
@@ -52,7 +52,7 @@ float minThresh = 1.0;
 int lf = 10;
 String myString = null;
 
-// mapping shit
+// mapping stuff
 float minValueIn = -45;
 float maxValueIn = 45;
 float minValueOut = 0;
@@ -64,7 +64,7 @@ float prev_angle_y;
 float radius = 10;
 float wall_thick = 2;
 
-// physics shit
+// physics stuff
 float wall_slope_x;
 float wall_slope_y;
 float ball_mass = 0.02; // kg?? idk help
@@ -86,7 +86,7 @@ int impulse_count_x = 0;
 int impulse_count_y = 0;
 int impulse_size = 500;
 
-//Audio shit
+//Audio stuff
 boolean ballmoving = false;
 boolean wasPlaying = false;
 float speed = 1.0;
@@ -132,7 +132,7 @@ class Wall {
   //}
 }
 
-// maze shit
+// maze stuff
 ArrayList<Wall> wallsList = new ArrayList<Wall>();
 
 
@@ -170,7 +170,7 @@ void setup () {
   triangle(50 + 90 - 45, 65 + 7 * 90 + 30, 50 + 90 - 30, 65 + 7 * 90 + 60, 50 + 90 - 60, 65 + 7 * 90 + 60);
  
 
-  // maze shit - 2D
+  // maze stuff - 2D
   // creating the maze
 
   //wallsList.add(new Wall(150,450,300,2)); // bot
@@ -245,7 +245,7 @@ void setup () {
   wallsList.add(new Wall(50 + 90*9, 65 + 90*3, 90, 2 ));
   
 
-  // maze shit - 3D
+  // maze stuff - 3D
   // outer walls
   //wallsList.add(new Wall(150, 450, 300, wall_thick));   // bottom
   //wallsList.add(new Wall(150, 150 - wall_thick, 300, wall_thick)); // top
