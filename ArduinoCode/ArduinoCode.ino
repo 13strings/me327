@@ -169,7 +169,7 @@ float phase = 0.0;
 float x_coll;
 float y_coll;
 
-const unsigned long impactDuration = 110;      // Vibration length in ms
+const unsigned long impactDuration = 120;      // Vibration length in ms
 const unsigned long collisionCooldown = 600;   // Minimum time between vibrations in ms
 
 // ==== Runtime Variables ====
