@@ -413,9 +413,9 @@ void loop() {
 
 
 bool currentCollisionX = (x_coll == 1);  // Ball touching wall on X axis
-bool risingEdgeX = currentCollisionX && !prevCollisionX;
+bool collisionCandidateX = currentCollisionX && !prevCollisionX;
 
-if (risingEdgeX && currentTime - lastTriggerTimeX > collisionCooldown) {
+if (collisionCandidateX && currentTime - lastTriggerTimeX > collisionCooldown) {
   analogWrite(vibMotorPin1, 200);  // Turn on motor for X collision
   motorOnX = true;
   motorStartTimeX = currentTime;
@@ -432,9 +432,9 @@ prevCollisionX = currentCollisionX;  // Update for next loop
 
 // For Y collision
 bool currentCollisionY = (y_coll == 1);  // Ball touching wall on Y axis
-bool risingEdgeY = currentCollisionY && !prevCollisionY;
+bool collisionCandidateY = currentCollisionY && !prevCollisionY;
 
-if (risingEdgeY && currentTime - lastTriggerTimeY > collisionCooldown) {
+if (collisionCandidateY && currentTime - lastTriggerTimeY > collisionCooldown) {
   analogWrite(vibMotorPin2, 200);  // Turn on motor for Y collision (using second motor pin)
   motorOnY = true;
   motorStartTimeY = currentTime;
